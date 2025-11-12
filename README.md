@@ -1,1 +1,1080 @@
-test
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Pybiester Game-Analyzer</title>
+
+    <!-- Tailwind -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['Inter', 'sans-serif'] },
+                    colors: {
+                        'grid-dark': '#374151',
+                        'grid-light': '#F3F4F6',
+                        'agent-blue': '#3B82F6',
+                        'food-orange': '#F97316',
+                        'enemy-red': '#EF4444',
+                        'enemy-green': '#10B981',
+                        'move-pink': '#EC4899',
+                        'area-purple': '#7C3AED'
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        .grid-cell {
+            aspect-ratio: 1 / 1;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 0.25rem;
+            transition: all 0.1s ease;
+            box-shadow: inset 0 0 0 1px rgba(0,0,0,0.05);
+            overflow: visible;
+        }
+        .grid-container { position: relative; }
+
+        .overlay { position: absolute; top:0; left:0; width:100%; height:100%; pointer-events:none; z-index:10; }
+
+        .overlay-point {
+            position: absolute;
+            width: 16%;
+            height: 16%;
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            opacity: 0.9;
+            box-shadow: 0 0 5px rgba(0,0,0,0.5);
+            pointer-events: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.65rem;
+            color: white;
+            font-weight: bold;
+            line-height: 1;
+            border: 2px solid white;
+        }
+
+        /* Bewegungsbereich (5x5) als lila Rahmen */
+        .move-area {
+            position: absolute;
+            border: 3px solid rgba(124,58,237,0.95);
+            border-radius: 0.5rem;
+            pointer-events: none;
+            z-index: 12;
+            box-shadow: 0 0 12px rgba(124,58,237,0.15);
+        }
+
+        /* Pinker Rahmen für nächsten Zug (Move) – eigener Overlay */
+        .next-move-overlay {
+            position: absolute;
+            transform: translate(-50%, -50%);
+            width: 16%;
+            height: 16%;
+            border-radius: 0.25rem;
+            border: 3px solid rgba(236,72,153,0.95);
+            box-shadow: 0 0 10px rgba(236,72,153,0.7);
+            pointer-events: none;
+            z-index: 40;
+        }
+
+        /* Modal Styling */
+        .modal { display: none; position: fixed; z-index: 100; left:0; top:0; width:100%; height:100%; overflow:auto; background-color: rgba(0,0,0,0.8); backdrop-filter: blur(5px); -webkit-backdrop-filter: blur(5px); justify-content:center; align-items:center; }
+        .modal-content-wrapper { position: relative; background-color:white; padding:1rem; border-radius:1rem; box-shadow:0 10px 25px rgba(0,0,0,0.5); max-width:90vh; max-height:90vw; width:min(90vh,90vw); }
+        .modal .grid-container { gap:0; padding:0; border:none; width:100%; height:100%; }
+        .modal .grid-cell { box-shadow:none; border-radius:0; }
+        .modal .overlay-point { width:10%; height:10%; font-size:0.8rem; }
+        #timelineSlider::-webkit-slider-thumb { -webkit-appearance:none; appearance:none; width:16px; height:16px; border-radius:50%; background:#3B82F6; cursor:pointer; box-shadow:0 0 5px rgba(0,0,0,0.2); }
+    </style>
+</head>
+<body class="bg-gray-100 min-h-screen p-4 sm:p-8 font-sans">
+
+    <!-- Passwort-Screen -->
+    <div id="passwordScreen" class="min-h-[60vh] flex items-center justify-center">
+        <div class="bg-white border border-gray-200 rounded-xl p-6 w-full max-w-sm shadow-xl">
+            <h1 class="text-xl font-bold mb-4 text-center text-gray-800">Pybiester Game-Analyzer</h1>
+            <p class="text-sm text-gray-600 mb-4 text-center">
+                Bitte Passwort eingeben, um fortzufahren.
+            </p>
+            <form id="passwordForm" class="space-y-4">
+                <input
+                    id="passwordInput"
+                    type="password"
+                    class="w-full px-3 py-2 rounded-lg bg-gray-50 border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-agent-blue"
+                    placeholder="Passwort"
+                    autocomplete="current-password"
+                />
+                <button
+                    type="submit"
+                    class="w-full py-2 rounded-lg bg-agent-blue hover:bg-blue-600 text-sm font-semibold text-white transition"
+                >
+                    Entsperren
+                </button>
+                <p id="passwordError" class="text-xs text-red-500 h-4 mt-1 text-center"></p>
+            </form>
+        </div>
+    </div>
+
+    <!-- Hier wird die App dynamisch eingefügt -->
+    <div id="appRoot" class="hidden"></div>
+
+    <!-- App-Template (wird erst nach korrektem Passwort ins DOM geholt) -->
+    <template id="appTemplate">
+        <div class="max-w-7xl mx-auto">
+            <header class="mb-6 pb-4 border-b border-gray-300">
+                <h1 class="text-3xl font-bold text-gray-800">Pybiester Game-Analyzer</h1>
+            </header>
+
+            <!-- Uploads + Runden-Steuerung -->
+            <div class="flex flex-col sm:flex-row items-center justify-between mb-6 space-y-4 sm:space-y-0">
+                <div class="flex items-center space-x-3">
+                    <label class="text-sm text-gray-700">Spiel-Log (NDJSON):</label>
+                    <input type="file" id="fileInput" accept=".txt,.log,.ndjson,.json" class="text-sm rounded-full cursor-pointer">
+                </div>
+
+                <!-- Server-Logs Upload -->
+                <div class="flex items-center space-x-3">
+                    <label class="text-sm text-gray-700">Server-Logs (NDJSON):</label>
+                    <input type="file" id="serverLogInput" accept=".txt,.log,.ndjson,.json" class="text-sm rounded-full cursor-pointer">
+                </div>
+
+                <div id="roundControls" class="flex items-center space-x-2 w-full sm:w-auto">
+                    <button id="prevRound" class="p-2 bg-gray-300 text-gray-800 rounded-full hover:bg-gray-400 disabled:opacity-50 transition" disabled>
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clip-rule="evenodd" /></svg>
+                    </button>
+                    <span id="roundIndicator" class="text-lg font-semibold text-gray-700 min-w-[140px] text-center">Runde 0 / 0</span>
+                    <button id="nextRound" class="p-2 bg-gray-300 text-gray-800 rounded-full hover:bg-gray-400 disabled:opacity-50 transition" disabled>
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" /></svg>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Timeline & Playback -->
+            <div class="bg-white p-4 rounded-xl shadow-lg mb-6">
+                <h3 class="text-lg font-semibold mb-2 text-gray-800">Zeitstrahl & Wiedergabe</h3>
+                <div class="flex flex-col md:flex-row items-center space-y-4 md:space-y-0 md:space-x-4">
+                    <input type="range" id="timelineSlider" min="0" max="0" value="0" disabled class="w-full md:w-auto flex-grow h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer">
+                    <div class="flex items-center space-x-3">
+                        <button id="playPauseButton" class="p-2 text-white rounded-full disabled:opacity-50 transition bg-agent-blue hover:bg-blue-600" disabled>
+                            <svg id="playIcon" xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" viewBox="0 0 24 24" fill="currentColor"><path d="M6 3l15 9-15 9V3z"></path></svg>
+                            <svg id="pauseIcon" xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 hidden" viewBox="0 0 24 24" fill="currentColor"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"></path></svg>
+                        </button>
+                        <div class="flex items-center space-x-1 bg-gray-100 p-2 rounded-lg">
+                            <label for="fpsInput" class="text-sm text-gray-600 whitespace-nowrap">FPS:</label>
+                            <input type="number" id="fpsInput" value="4" min="1" max="60" class="w-16 p-1 border border-gray-300 rounded-md text-center text-sm">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- GRID mit 4 Spalten -->
+            <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
+                <!-- links: env + agent info -->
+                <div class="lg:col-span-1 bg-white p-6 rounded-xl shadow-lg h-full">
+                    <h2 class="text-xl font-bold mb-3 text-gray-800">Sichtfeld (Env String)</h2>
+                    <div id="envGridDisplay" class="grid grid-cols-7 gap-1 p-2 bg-gray-100 rounded-lg text-center text-xs font-mono"></div>
+                    <div class="mt-2 flex justify-end">
+                        <button id="copyEnvButton" class="px-3 py-1 text-xs rounded-lg bg-agent-blue text-white hover:bg-blue-600 transition">
+                            Env String kopieren
+                        </button>
+                    </div>
+
+                    <h2 class="text-xl font-bold mb-4 text-gray-800 border-t pt-4 mt-4">Biest-Status</h2>
+                    <div id="agentStatus" class="space-y-3">
+                        <p class="text-gray-600"><span class="font-semibold text-gray-800">Runde:</span> <span id="infoRound">N/A</span></p>
+                        <p class="text-gray-600"><span class="font-semibold text-gray-800">Event:</span> <span id="infoEvent">N/A</span></p>
+                        <p class="text-gray-600"><span class="font-semibold text-gray-800">Biest ID (Bid):</span> <span id="infoBid">N/A</span></p>
+                        <p class="text-gray-600"><span class="font-semibold text-gray-800">Energie (Energ):</span> <span id="infoEnerg">N/A</span></p>
+                        <p class="text-gray-600"><span class="font-semibold text-gray-800">Nächster Zug (Move):</span> <span id="infoMove">N/A</span></p>
+                    </div>
+                </div>
+
+                <!-- mittig: Spielfeld -->
+                <div class="lg:col-span-1 bg-white p-4 rounded-xl shadow-lg flex justify-center items-center flex-col">
+                    <div id="coordinateWrapper" class="flex flex-col w-full max-w-sm">
+                        <div class="flex justify-between text-sm text-gray-600 px-1 pt-1 font-mono">
+                            <span class="axis-label">-3</span><span class="axis-label">-2</span><span class="axis-label">-1</span><span class="axis-label">0</span><span class="axis-label">1</span><span class="axis-label">2</span><span class="axis-label">3</span>
+                        </div>
+
+                        <div class="flex flex-grow">
+                            <div class="flex flex-col justify-between text-sm text-gray-600 pr-2 pt-1 pb-1 font-mono">
+                                <span>-3</span><span>-2</span><span>-1</span><span>0</span><span>1</span><span>2</span><span>3</span>
+                            </div>
+
+                            <div id="gridContainer" class="grid-container w-full aspect-square border-4 border-gray-400 rounded-lg relative overflow-hidden grid grid-cols-7 gap-1 p-1"></div>
+                        </div>
+                    </div>
+
+                    <button id="zoomButton" class="mt-4 p-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 disabled:opacity-50 transition flex items-center space-x-2" disabled>
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line><line x1="11" y1="8" x2="11" y2="14"></line><line x1="8" y1="11" x2="14" y2="11"></line></svg>
+                        <span>Spielfeld vergrößern (Zoom)</span>
+                    </button>
+
+                    <div class="mt-6 p-4 bg-gray-50 rounded-lg w-full max-w-sm border border-gray-200">
+                        <h3 class="font-bold text-gray-800 mb-2">Spielfeld Legende</h3>
+                        <div class="grid grid-cols-2 gap-2 text-sm text-gray-700">
+                            <p><span class="inline-block w-3 h-3 bg-agent-blue rounded-full mr-2"></span> B: Biest (Du)</p>
+                            <p><span class="inline-block w-3 h-3 bg-food-orange rounded-full mr-2"></span> F: Futter (*)</p>
+                            <p><span class="inline-block w-3 h-3 bg-enemy-red rounded-full mr-2"></span> E: Großer Gegner (>, =)</p>
+                            <p><span class="inline-block w-3 h-3 bg-enemy-green rounded-full mr-2"></span> e: Kleiner Gegner (&lt;)</p>
+                            <p><span class="inline-block w-3 h-3 ring-2 ring-offset-2 ring-move-pink rounded-full mr-2"></span> Pinker Rahmen: Nächster Zug (Move)</p>
+                            <p><span class="inline-block w-3 h-3 ring-2 ring-offset-2 ring-area-purple rounded-full mr-2"></span> Lila Rahmen: Bewegungsbereich 5x5</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- rechts-mitte: Prioritäten & Listen -->
+                <div class="lg:col-span-1 bg-white p-6 rounded-xl shadow-lg h-full">
+                    <h2 class="text-xl font-bold mb-4 text-gray-800">Prioritäten & Listen</h2>
+                    <div id="priorityLists" class="space-y-4">
+                        <div class="border-b pb-2">
+                            <div class="flex items-start justify-between">
+                                <div class="flex flex-col">
+                                    <span class="font-semibold text-gray-800">Futter-Liste (Foodlist)</span>
+                                    <span class="text-sm text-gray-600">Prio: <span id="prioFood">N/A</span></span>
+                                </div>
+                                <button class="eye-icon text-gray-400 hover:text-food-orange" data-list="foodlist">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                                </button>
+                            </div>
+                            <div id="listFoodCoords" class="text-xs text-gray-500 mt-1 font-mono break-all"></div>
+                        </div>
+
+                        <div class="border-b pb-2">
+                            <div class="flex items-start justify-between">
+                                <div class="flex flex-col">
+                                    <span class="font-semibold text-gray-800">Jagd-Liste (Huntlist)</span>
+                                    <span class="text-sm text-gray-600">Prio: <span id="prioHunt">N/A</span></span>
+                                </div>
+                                <button class="eye-icon text-gray-400 hover:text-enemy-red" data-list="huntlist">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                                </button>
+                            </div>
+                            <div id="listHuntCoords" class="text-xs text-gray-500 mt-1 font-mono break-all"></div>
+                        </div>
+
+                        <div class="border-b pb-2">
+                            <div class="flex items-start justify-between">
+                                <div class="flex flex-col">
+                                    <span class="font-semibold text-gray-800">Flucht-Liste (Escapelist)</span>
+                                    <span class="text-sm text-gray-600">Prio: <span id="prioEscape">N/A</span></span>
+                                </div>
+                                <button class="eye-icon text-gray-400 hover:text-move-pink" data-list="escapelist">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                                </button>
+                            </div>
+                            <div id="listEscapeCoords" class="text-xs text-gray-500 mt-1 font-mono break-all"></div>
+                        </div>
+
+                        <div class="text-sm pt-4 text-gray-500">
+                            <p><span class="inline-block w-3 h-3 bg-food-orange rounded-full"></span> = Futter-Ziel</p>
+                            <p><span class="inline-block w-3 h-3 bg-enemy-red rounded-full"></span> = Jagd-Ziel</p>
+                            <p><span class="inline-block w-3 h-3 bg-move-pink rounded-full"></span> = Flucht-Ziel</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Server-Logs Panel -->
+                <div class="lg:col-span-1 bg-white p-4 rounded-xl shadow-lg h-full overflow-auto">
+                    <div class="flex items-center justify-between mb-3">
+                        <h2 class="text-xl font-bold text-gray-800">Server-Logs</h2>
+                        <span id="serverLogStatus" class="text-sm text-gray-500">keine Logs</span>
+                    </div>
+                    <div id="serverLogsContainer" class="text-sm font-mono text-gray-700 space-y-2">
+                        <div class="text-gray-400">Lade Server-Logs hoch, um Einträge anzuzeigen.</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Zoom Modal -->
+        <div id="zoomModal" class="modal" onclick="closeModal(event)">
+            <div class="modal-content-wrapper" onclick="event.stopPropagation()">
+                <div class="flex justify-between text-sm text-gray-400 px-1 pt-1 font-mono">
+                    <span class="axis-label">-3</span><span class="axis-label">-2</span><span class="axis-label">-1</span><span class="axis-label">0</span><span class="axis-label">1</span><span class="axis-label">2</span><span class="axis-label">3</span>
+                </div>
+
+                <div class="flex flex-grow w-full h-full">
+                    <div class="flex flex-col justify-between text-sm text-gray-400 pr-2 pt-1 pb-1 font-mono">
+                        <span>-3</span><span>-2</span><span>-1</span><span>0</span><span>1</span><span>2</span><span>3</span>
+                    </div>
+
+                    <div id="gridContainerModal" class="grid-container w-full aspect-square relative overflow-hidden grid grid-cols-7 border-4 border-gray-300 rounded-xl"></div>
+                </div>
+
+                <button class="absolute top-2 right-2 text-white text-3xl font-bold hover:text-gray-300 transition" onclick="closeModal()">×</button>
+                <div class="absolute bottom-2 left-1/2 transform -translate-x-1/2 text-sm text-gray-400">
+                    <span id="modalRoundIndicator"></span>
+                </div>
+            </div>
+        </div>
+
+        <!-- List Modal -->
+        <div id="listModal" class="modal" onclick="closeListModal(event)">
+            <div class="modal-content-wrapper max-w-lg" onclick="event.stopPropagation()">
+                <div class="flex justify-between items-start">
+                    <h3 id="listModalTitle" class="text-lg font-bold">Liste</h3>
+                    <button class="text-gray-500 hover:text-gray-700 text-2xl" onclick="closeListModal()">&times;</button>
+                </div>
+                <div id="listModalContent" class="mt-3 text-sm font-mono text-gray-700 leading-relaxed max-h-80 overflow-auto"></div>
+            </div>
+        </div>
+    </template>
+
+<script>
+/* --- App-Status & globale Variablen --- */
+let logData = [];
+let serverLogs = [];
+let currentRoundIndex = 0;
+const GRID_SIZE = 7;
+const GRID_CENTER = Math.floor(GRID_SIZE/2);
+let activeListForOverlay = null;
+
+/* DOM-Referenzen (werden nach Unlock gesetzt) */
+let fileInput;
+let serverLogInput;
+let gridContainer;
+let gridContainerModal;
+let envGridDisplay;
+let roundIndicator;
+let prevRoundButton;
+let nextRoundButton;
+let timelineSlider;
+let playPauseButton;
+let playIcon;
+let pauseIcon;
+let fpsInput;
+let zoomButton;
+let zoomModal;
+let modalRoundIndicator;
+let serverLogsContainer;
+let serverLogStatus;
+let copyEnvButton;
+
+let playbackInterval = null;
+let isPlaying = false;
+
+/* --- Clipboard Helper --- */
+function copyText(text, buttonEl){
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(()=>{
+            if (buttonEl) {
+                const old = buttonEl.textContent;
+                buttonEl.textContent = 'Kopiert!';
+                setTimeout(()=>{ buttonEl.textContent = old; }, 1200);
+            }
+        }).catch(()=>{
+            fallbackCopy(text, buttonEl);
+        });
+    } else {
+        fallbackCopy(text, buttonEl);
+    }
+}
+function fallbackCopy(text, buttonEl){
+    const textarea = document.createElement('textarea');
+    textarea.value = text;
+    textarea.style.position = 'fixed';
+    textarea.style.left = '-9999px';
+    document.body.appendChild(textarea);
+    textarea.focus();
+    textarea.select();
+    try {
+        document.execCommand('copy');
+        if (buttonEl) {
+            const old = buttonEl.textContent;
+            buttonEl.textContent = 'Kopiert!';
+            setTimeout(()=>{ buttonEl.textContent = old; }, 1200);
+        }
+    } catch (err) {
+        console.error('Copy failed', err);
+    }
+    document.body.removeChild(textarea);
+}
+
+/* --- Hilfsfunktionen / Rendering --- */
+function coordsToStringIndex(x,y){
+    const rowIndex = y + GRID_CENTER;
+    const colIndex = x + GRID_CENTER;
+    return rowIndex * GRID_SIZE + colIndex;
+}
+function coordsToPercent(x,y){
+    const left = (x + GRID_CENTER + 0.5) * (100 / GRID_SIZE);
+    const top  = (y + GRID_CENTER + 0.5) * (100 / GRID_SIZE);
+    return { left, top };
+}
+
+function formatCoordsListHTML(list, basePriority, nextMove, title) {
+    if (!list || list.length === 0) return '[]';
+    const items = list.map((c,i)=>{
+        const priority = basePriority - i;
+        const coordString = `[${c.join(', ')}]`;
+        const isNext = nextMove && c.length===2 && c[0]===nextMove[0] && c[1]===nextMove[1];
+        const text = `(${priority}) ${coordString}`;
+        return isNext ? `<span class="text-move-pink font-bold border-b-2 border-move-pink">${text}</span>` : text;
+    });
+    const visible = items.slice(0,5);
+    let html = visible.join(', ');
+    if (list.length > 5) {
+        const payload = encodeURIComponent(JSON.stringify(list));
+        html += `, <button class="show-full-list underline text-sm" data-list-enc="${payload}" data-title="${title}">... (${list.length - 5} weitere)</button>`;
+    }
+    return html;
+}
+
+function createGridCells(data, container, isModal){
+    container.innerHTML = '';
+    const env = data.env || ''.padEnd(49, '.');
+
+    for (let y=-GRID_CENTER; y<=GRID_CENTER; y++){
+        for (let x=-GRID_CENTER; x<=GRID_CENTER; x++){
+            const index = coordsToStringIndex(x,y);
+            const cellChar = env[index] || '.';
+            const isAgent = x===0 && y===0;
+
+            let cellColor = isModal ? 'bg-gray-200' : 'bg-grid-light';
+            let content = '';
+
+            if (cellChar === '*') { cellColor = 'bg-food-orange'; content = 'F'; }
+            else if (cellChar === '>' || cellChar === '=') { cellColor = 'bg-enemy-red'; content = 'E'; }
+            else if (cellChar === '<') { cellColor = 'bg-enemy-green'; content = 'e'; }
+            else { cellColor = 'bg-gray-200'; content = ''; }
+
+            if (isAgent){ cellColor = 'bg-agent-blue'; content = 'B'; }
+
+            const cellDiv = document.createElement('div');
+            cellDiv.className = `grid-cell ${cellColor} font-bold text-white text-xs shadow-inner`;
+            if (isModal) cellDiv.classList.add('text-lg');
+
+            cellDiv.innerHTML = `<span class="absolute">${content}</span>`;
+            cellDiv.dataset.coord = `${x},${y}`;
+            container.appendChild(cellDiv);
+        }
+    }
+}
+
+/* Overlay-Ring für den nächsten Move */
+function drawNextMoveRing(container, data){
+    const existing = container.querySelector('.next-move-overlay');
+    if (existing) existing.remove();
+
+    const mv = (data.move && data.move.length === 2) ? data.move : null;
+    if (!mv) return;
+
+    const [x,y] = mv;
+    if (x < -GRID_CENTER || x > GRID_CENTER || y < -GRID_CENTER || y > GRID_CENTER) return;
+
+    const { left, top } = coordsToPercent(x,y);
+    const ring = document.createElement('div');
+    ring.className = 'next-move-overlay';
+    ring.style.left = `${left}%`;
+    ring.style.top  = `${top}%`;
+    container.appendChild(ring);
+}
+
+function renderGrid(data){
+    createGridCells(data, gridContainer, false);
+    ensureMoveAreaDiv();
+    placeMoveArea();
+    drawNextMoveRing(gridContainer, data);
+    if (zoomModal && zoomModal.style.display === 'flex'){
+        updateModalContent(data);
+    }
+}
+
+function renderEnvGrid(envString){
+    envGridDisplay.innerHTML = '';
+    for (let i=0;i<envString.length;i++){
+        const char = envString[i];
+        const cellDiv = document.createElement('div');
+        cellDiv.textContent = char;
+        let cellClass = 'p-1 aspect-square bg-gray-200 rounded-sm flex items-center justify-center font-mono';
+        if (char === '*') cellClass += ' text-food-orange font-bold';
+        else if (char === '>' || char === '=') cellClass += ' text-enemy-red font-bold';
+        else if (char === '<') cellClass += ' text-enemy-green font-bold';
+        else if (i === coordsToStringIndex(0,0)) cellClass += ' text-agent-blue font-bold';
+        cellDiv.className = cellClass;
+        envGridDisplay.appendChild(cellDiv);
+    }
+}
+
+function renderInfo(data){
+    document.getElementById('infoRound').textContent = data.round;
+    document.getElementById('infoEvent').textContent = data.event;
+    document.getElementById('infoBid').textContent = data.bid;
+    document.getElementById('infoEnerg').textContent = (typeof data.energ === 'number') ? data.energ.toFixed(2) : data.energ;
+    document.getElementById('infoMove').textContent = data.move ? `[${data.move.join(', ')}]` : 'N/A';
+
+    const prioFood = parseInt(data.priorityfood) || 0;
+    const prioHunt = parseInt(data.priorityhunt) || 0;
+    const prioEscape = parseInt(data.priorityescape) || 0;
+
+    document.getElementById('prioFood').textContent = prioFood;
+    document.getElementById('prioHunt').textContent = prioHunt;
+    document.getElementById('prioEscape').textContent = prioEscape;
+
+    const nextMove = (data.move && data.move.length===2) ? data.move : null;
+    document.getElementById('listFoodCoords').innerHTML = formatCoordsListHTML(data.foodlist, prioFood, nextMove, 'Futter-Liste');
+    document.getElementById('listHuntCoords').innerHTML = formatCoordsListHTML(data.huntlist, prioHunt, nextMove, 'Jagd-Liste');
+    document.getElementById('listEscapeCoords').innerHTML = formatCoordsListHTML(data.escapelist, prioEscape, nextMove, 'Flucht-Liste');
+}
+
+function togglePlayback(shouldPlay = !isPlaying){
+    isPlaying = shouldPlay;
+    if (playbackInterval){ clearInterval(playbackInterval); playbackInterval = null; }
+    if (isPlaying){
+        if (currentRoundIndex >= logData.length - 1) goToRound(0);
+        const fps = parseInt(fpsInput.value) || 4;
+        const intervalMs = 1000 / fps;
+        playbackInterval = setInterval(()=>{
+            if (currentRoundIndex < logData.length - 1) goToRound(currentRoundIndex + 1);
+            else togglePlayback(false);
+        }, intervalMs);
+        playIcon.classList.add('hidden'); pauseIcon.classList.remove('hidden');
+        playPauseButton.classList.remove('bg-agent-blue','hover:bg-blue-600');
+        playPauseButton.classList.add('bg-move-pink','hover:bg-pink-600');
+    } else {
+        pauseIcon.classList.add('hidden'); playIcon.classList.remove('hidden');
+        playPauseButton.classList.remove('bg-move-pink','hover:bg-pink-600');
+        playPauseButton.classList.add('bg-agent-blue','hover:bg-blue-600');
+    }
+}
+
+/* Move-Area (5x5) */
+function ensureMoveAreaDiv(){
+    let area = document.getElementById('moveAreaDiv');
+    if (!area){
+        area = document.createElement('div');
+        area.id = 'moveAreaDiv';
+        area.className = 'move-area';
+        gridContainer.appendChild(area);
+    }
+}
+function placeMoveArea(){
+    const x0 = -2, y0 = -2, x1 = 2, y1 = 2;
+    const leftPercent = (x0 + GRID_CENTER) * (100 / GRID_SIZE) + (100/GRID_SIZE)*0.02;
+    const topPercent  = (y0 + GRID_CENTER) * (100 / GRID_SIZE) + (100/GRID_SIZE)*0.02;
+    const widthPct = (x1 - x0 + 1) * (100 / GRID_SIZE) - (100/GRID_SIZE)*0.04;
+    const heightPct = (y1 - y0 + 1) * (100 / GRID_SIZE) - (100/GRID_SIZE)*0.04;
+    const area = document.getElementById('moveAreaDiv');
+    if (area){
+        area.style.left = `${leftPercent}%`;
+        area.style.top = `${topPercent}%`;
+        area.style.width = `${widthPct}%`;
+        area.style.height = `${heightPct}%`;
+    }
+}
+
+/* Overlay-Punkte für Listen */
+function showListOverlay(listName){
+    const container = (zoomModal && zoomModal.style.display === 'flex') ? gridContainerModal : gridContainer;
+    if (!container) return;
+    const existing = container.querySelector('.overlay');
+    if (existing) existing.remove();
+
+    activeListForOverlay = listName;
+    const currentData = logData[currentRoundIndex];
+    const list = currentData[listName] || [];
+
+    const overlayDiv = document.createElement('div');
+    overlayDiv.className = 'overlay rounded-lg';
+    overlayDiv.id = 'listOverlay';
+
+    let pointColor = '';
+    if (listName === 'foodlist') pointColor = 'bg-food-orange';
+    else if (listName === 'huntlist') pointColor = 'bg-enemy-red';
+    else if (listName === 'escapelist') pointColor = 'bg-move-pink';
+
+    const basePriorityKey = 'priority' + listName.replace('list','');
+    const basePriority = parseInt(currentData[basePriorityKey]) || 0;
+
+    const nextMove = (currentData.move && currentData.move.length === 2) ? currentData.move : null;
+
+    list.forEach((coords,i)=>{
+        if (!coords || coords.length!==2) return;
+        const [x,y] = coords;
+        if (x < -GRID_CENTER || x > GRID_CENTER || y < -GRID_CENTER || y > GRID_CENTER) return;
+
+        const isNextMove = nextMove && x === nextMove[0] && y === nextMove[1];
+        if (isNextMove) return;
+
+        const { left, top } = coordsToPercent(x,y);
+
+        const pointDiv = document.createElement('div');
+        pointDiv.className = `overlay-point ${pointColor}`;
+        pointDiv.style.left = `${left}%`;
+        pointDiv.style.top  = `${top}%`;
+        const priorityValue = basePriority - i;
+        pointDiv.textContent = priorityValue;
+
+        overlayDiv.appendChild(pointDiv);
+    });
+
+    container.appendChild(overlayDiv);
+}
+
+function hideOverlay(){
+    activeListForOverlay = null;
+    if (gridContainer) gridContainer.querySelectorAll('.overlay').forEach(el => el.remove());
+    if (gridContainerModal) gridContainerModal.querySelectorAll('.overlay').forEach(el => el.remove());
+}
+
+function updateModalContent(data){
+    createGridCells(data, gridContainerModal, true);
+    if (activeListForOverlay) showListOverlay(activeListForOverlay);
+    drawNextMoveRing(gridContainerModal, data);
+    modalRoundIndicator.textContent = `Runde ${data.round} / ${logData.length>0 ? logData[logData.length-1].round : 0}`;
+}
+
+function openModal(){
+    if (logData.length===0 || !zoomModal) return;
+    zoomModal.style.display = 'flex';
+    updateModalContent(logData[currentRoundIndex]);
+}
+function closeModal(event){
+    if (!zoomModal) return;
+    if (!event || event.target === zoomModal){
+        zoomModal.style.display = 'none';
+        if (activeListForOverlay){
+            const temp = activeListForOverlay;
+            hideOverlay();
+            showListOverlay(temp);
+        }
+    }
+}
+
+/* Listen-Modal mit pinkem Move-Eintrag */
+function showFullListModal(title, list, basePriority){
+    const titleEl = document.getElementById('listModalTitle');
+    const contentEl = document.getElementById('listModalContent');
+    titleEl.textContent = title;
+
+    if (!list || list.length===0){
+        contentEl.innerHTML = '<div class="text-gray-500">(leer)</div>';
+    } else {
+        const currentData = logData[currentRoundIndex] || {};
+        const mv = (currentData.move && currentData.move.length === 2) ? currentData.move : null;
+
+        const html = list.map((c,i)=>{
+            const prio = basePriority - i;
+            const isNext = mv && c[0] === mv[0] && c[1] === mv[1];
+            const cls = isNext ? 'text-move-pink font-bold border-b-2 border-move-pink' : '';
+            return `<div class="${cls}">(${prio}) [${c[0]}, ${c[1]}]</div>`;
+        }).join('');
+        contentEl.innerHTML = html;
+    }
+    document.getElementById('listModal').style.display = 'flex';
+}
+function closeListModal(event){
+    const listModal = document.getElementById('listModal');
+    if (!listModal) return;
+    if (!event || event.target === listModal)
+        listModal.style.display = 'none';
+}
+
+function goToRound(index){
+    if (logData.length === 0) return;
+    if (index >= 0 && index < logData.length){
+        currentRoundIndex = index;
+        const currentData = logData[currentRoundIndex];
+
+        const maxRound = logData[logData.length - 1].round;
+        roundIndicator.textContent = `Runde ${currentData.round} / ${maxRound}`;
+        if (modalRoundIndicator) {
+            modalRoundIndicator.textContent = `Runde ${currentData.round} / ${maxRound}`;
+        }
+
+        timelineSlider.value = index;
+        renderGrid(currentData);
+        renderInfo(currentData);
+        renderEnvGrid(currentData.env);
+
+        prevRoundButton.disabled = currentRoundIndex === 0;
+        nextRoundButton.disabled = currentRoundIndex === logData.length - 1;
+
+        hideOverlay();
+        if (activeListForOverlay) {
+            showListOverlay(activeListForOverlay);
+        }
+
+        renderServerLogsForRound(currentData.round);
+    }
+}
+
+function parseNDJSONContentToArray(text){
+    const lines = text.split(/\r?\n/).map(l=>l.trim()).filter(l=>l.length>0);
+    const arr = [];
+    for (const line of lines){
+        try { const obj = JSON.parse(line); arr.push(obj); }
+        catch(e){ console.warn('Ungültige NDJSON-Zeile ignoriert:', line); }
+    }
+    return arr;
+}
+
+function renderServerLogsForRound(roundNumber){
+    serverLogsContainer.innerHTML = '';
+    if (!serverLogs || serverLogs.length === 0){
+        serverLogsContainer.innerHTML = '<div class="text-gray-400">Keine Server-Logs verfügbar.</div>';
+        serverLogStatus.textContent = 'keine Logs';
+        return;
+    }
+
+    if (roundNumber == null) {
+        serverLogs.forEach((entry)=>{
+            const wrapper = document.createElement('div');
+            wrapper.className = 'p-2 border rounded-md bg-gray-50';
+            const timeStr = entry.time ? `<div class="text-xs text-gray-400">Zeit: ${entry.time}</div>` : '';
+            wrapper.innerHTML = `
+                <div class="font-semibold text-sm text-gray-800">Round ${entry.round}</div>
+                ${timeStr}
+                <div class="text-sm text-gray-700 mt-1">${escapeHtml(entry.servermsg || '')}</div>
+                ${entry.exception ? `<div class="text-xs text-red-600 mt-1 font-mono">${escapeHtml(entry.exception)}</div>` : ''}
+            `;
+            serverLogsContainer.appendChild(wrapper);
+        });
+        serverLogStatus.textContent = `${serverLogs.length} Einträge gesamt`;
+        return;
+    }
+
+    const filtered = serverLogs.filter(l => parseInt(l.round) === parseInt(roundNumber));
+    if (filtered.length === 0){
+        serverLogsContainer.innerHTML = `<div class="text-gray-500">Keine Logs für Runde ${roundNumber}.</div>`;
+        serverLogStatus.textContent = `runde ${roundNumber}: 0 Einträge`;
+        return;
+    }
+    filtered.forEach((entry)=>{
+        const wrapper = document.createElement('div');
+        wrapper.className = 'p-2 border rounded-md bg-gray-50';
+        const timeStr = entry.time ? `<div class="text-xs text-gray-400">Zeit: ${entry.time}</div>` : '';
+        wrapper.innerHTML = `
+            <div class="font-semibold text-sm text-gray-800">Round ${entry.round}</div>
+            ${timeStr}
+            <div class="text-sm text-gray-700 mt-1">${escapeHtml(entry.servermsg || '')}</div>
+            ${entry.exception ? `<div class="text-xs text-red-600 mt-1 font-mono">${escapeHtml(entry.exception)}</div>` : ''}
+        `;
+        serverLogsContainer.appendChild(wrapper);
+    });
+    serverLogStatus.textContent = `runde ${roundNumber}: ${filtered.length} Einträge`;
+}
+function escapeHtml(s){
+    return String(s).replace(/[&<>]/g, (c)=> ({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+}
+
+/* Helper: Button für eine Liste per Tastatur „klicken“ */
+function triggerListButton(listName){
+    const button = document.querySelector(`.eye-icon[data-list="${listName}"]`);
+    if (button){
+        button.click();
+    }
+}
+
+/* Initiales leeres Grid */
+function renderEmptyGrid(){
+    const dummy = { env: '.'.repeat(49), round: 0, event: '', bid: '', energ: 0, move: null, foodlist: [], huntlist: [], escapelist: [], priorityfood: 0, priorityhunt: 0, priorityescape: 0 };
+    createGridCells(dummy, gridContainer, false);
+    ensureMoveAreaDiv();
+    placeMoveArea();
+}
+
+/* --- DOM-Initialisierung NACH Passwort-Check --- */
+function initAppDom(){
+    fileInput = document.getElementById('fileInput');
+    serverLogInput = document.getElementById('serverLogInput');
+    gridContainer = document.getElementById('gridContainer');
+    gridContainerModal = document.getElementById('gridContainerModal');
+    envGridDisplay = document.getElementById('envGridDisplay');
+    roundIndicator = document.getElementById('roundIndicator');
+    prevRoundButton = document.getElementById('prevRound');
+    nextRoundButton = document.getElementById('nextRound');
+    timelineSlider = document.getElementById('timelineSlider');
+    playPauseButton = document.getElementById('playPauseButton');
+    playIcon = document.getElementById('playIcon');
+    pauseIcon = document.getElementById('pauseIcon');
+    fpsInput = document.getElementById('fpsInput');
+    zoomButton = document.getElementById('zoomButton');
+    zoomModal = document.getElementById('zoomModal');
+    modalRoundIndicator = document.getElementById('modalRoundIndicator');
+    serverLogsContainer = document.getElementById('serverLogsContainer');
+    serverLogStatus = document.getElementById('serverLogStatus');
+    copyEnvButton = document.getElementById('copyEnvButton');
+
+    if (copyEnvButton) {
+        copyEnvButton.addEventListener('click', () => {
+            const envString =
+                (logData[currentRoundIndex] && logData[currentRoundIndex].env) ||
+                '.'.repeat(49);
+            copyText(envString, copyEnvButton);
+        });
+    }
+
+    /* Event-Listener für App */
+
+    fileInput.addEventListener('change', (e)=>{
+        const file = e.target.files[0];
+        if (!file) return;
+        togglePlayback(false);
+        const reader = new FileReader();
+        reader.onload = function(ev){
+            const content = ev.target.result;
+            try {
+                let parsed = parseNDJSONContentToArray(content);
+
+                if (parsed.length > 0) {
+                    const firstRound = parseInt(parsed[0].round);
+                    if (isNaN(firstRound) || firstRound > 0) {
+                        parsed.unshift({
+                            round: 0,
+                            env: '.'.repeat(49),
+                            event: 'Server-Start',
+                            bid: '',
+                            energ: 0,
+                            move: null,
+                            foodlist: [],
+                            huntlist: [],
+                            escapelist: [],
+                            priorityfood: 0,
+                            priorityhunt: 0,
+                            priorityescape: 0
+                        });
+                    }
+                }
+
+                logData = parsed;
+                if (logData.length > 0){
+                    timelineSlider.max = logData.length - 1;
+                    timelineSlider.disabled = false;
+                    playPauseButton.disabled = false;
+                    zoomButton.disabled = false;
+                    const maxRound = logData[logData.length - 1].round;
+                    roundIndicator.textContent = `Runde ${logData[0].round} / ${maxRound}`;
+                    goToRound(0);
+                } else {
+                    timelineSlider.max = 0; 
+                    timelineSlider.disabled = true; 
+                    playPauseButton.disabled = true; 
+                    zoomButton.disabled = true;
+                    roundIndicator.textContent = "Runde 0 / 0";
+                    alert('Datei enthält keine gültigen JSON-Einträge.');
+                }
+            } catch(err){
+                console.error('Fehler beim Parsen', err);
+                alert('Fehler beim Parsen der Log-Datei. Stelle sicher, dass jede Zeile ein JSON-Objekt ist.');
+            }
+        };
+        reader.readAsText(file);
+    });
+
+    serverLogInput.addEventListener('change', (e)=>{
+        const file = e.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = function(ev){
+            const content = ev.target.result;
+            try {
+                const parsed = parseNDJSONContentToArray(content);
+                serverLogs = parsed;
+                serverLogStatus.textContent = `geladen (${serverLogs.length})`;
+                if (logData.length > 0){
+                    const roundNum = logData[currentRoundIndex].round;
+                    renderServerLogsForRound(roundNum);
+                } else {
+                    renderServerLogsForRound(null);
+                }
+            } catch(err){
+                console.error('Fehler beim Parsen der Server Logs', err);
+                alert('Fehler beim Parsen der Server-Logs-Datei.');
+            }
+        };
+        reader.readAsText(file);
+    });
+
+    prevRoundButton.addEventListener('click', ()=>{
+        togglePlayback(false);
+        goToRound(currentRoundIndex - 1);
+    });
+    nextRoundButton.addEventListener('click', ()=>{
+        togglePlayback(false);
+        goToRound(currentRoundIndex + 1);
+    });
+    timelineSlider.addEventListener('input', (e)=>{
+        togglePlayback(false);
+        goToRound(parseInt(e.target.value));
+    });
+    playPauseButton.addEventListener('click', ()=>{
+        if (logData.length > 0) togglePlayback();
+    });
+    fpsInput.addEventListener('change', ()=>{
+        const val = parseInt(fpsInput.value);
+        if (val < 1) fpsInput.value = 1;
+        if (val > 60) fpsInput.value = 60;
+        if (isPlaying){ togglePlayback(false); togglePlayback(true); }
+    });
+
+    zoomButton.addEventListener('click', openModal);
+
+    /* Keyboard-Shortcuts:
+       - Pfeil rechts/links: nächste/vorherige Runde
+       - f: Foodlist-Button
+       - h: Huntlist-Button
+       - e: Escapelist-Button
+       - Leertaste: Play/Pause-Button
+       - Esc: Modals schließen
+    */
+    window.addEventListener('keydown', (e)=>{
+        const tagName = document.activeElement && document.activeElement.tagName;
+        const isInputLike =
+            document.activeElement &&
+            (document.activeElement.isContentEditable ||
+             tagName === 'INPUT' ||
+             tagName === 'TEXTAREA' ||
+             tagName === 'SELECT');
+
+        // ESC schließt Modals immer
+        if (e.key === 'Escape'){
+            closeModal();
+            closeListModal();
+            return;
+        }
+
+        // Keine weiteren Shortcuts, wenn man in ein Eingabefeld tippt
+        if (isInputLike) return;
+
+        // Leertaste: Play/Pause
+        if (e.code === 'Space' || e.key === ' ') {
+            e.preventDefault();
+            if (!playPauseButton.disabled) {
+                playPauseButton.click();
+            }
+            return;
+        }
+
+        if (!logData || logData.length === 0) return;
+
+        const key = (e.key && e.key.length === 1) ? e.key.toLowerCase() : e.key;
+
+        switch (key){
+            // Runden-Steuerung mit Pfeiltasten
+            case 'ArrowRight':
+                e.preventDefault();
+                togglePlayback(false);
+                if (currentRoundIndex < logData.length - 1){
+                    goToRound(currentRoundIndex + 1);
+                }
+                break;
+            case 'ArrowLeft':
+                e.preventDefault();
+                togglePlayback(false);
+                if (currentRoundIndex > 0){
+                    goToRound(currentRoundIndex - 1);
+                }
+                break;
+
+            // f → Foodlist-Auge
+            case 'f':
+                e.preventDefault();
+                triggerListButton('foodlist');
+                break;
+
+            // h → Huntlist-Auge
+            case 'h':
+                e.preventDefault();
+                triggerListButton('huntlist');
+                break;
+
+            // e → Escapelist-Auge (Flucht-Liste)
+            case 'e':
+                e.preventDefault();
+                triggerListButton('escapelist');
+                break;
+        }
+    });
+
+    document.getElementById('priorityLists').addEventListener('click', (e)=>{
+        const button = e.target.closest('.eye-icon');
+        if (button){
+            const listName = button.dataset.list;
+            const isActive = button.classList.contains('text-agent-blue') && activeListForOverlay === listName;
+            document.querySelectorAll('.eye-icon').forEach(btn => btn.classList.remove('text-agent-blue','font-bold'));
+            hideOverlay();
+            if (!isActive){
+                button.classList.add('text-agent-blue','font-bold');
+                showListOverlay(listName);
+                activeListForOverlay = listName;
+            } else {
+                activeListForOverlay = null;
+            }
+        }
+
+        const fullBtn = e.target.closest('.show-full-list');
+        if (fullBtn){
+            const enc = fullBtn.dataset.listEnc;
+            const title = fullBtn.dataset.title || 'Liste';
+            try {
+                const decoded = JSON.parse(decodeURIComponent(enc));
+                let basePrio = 0;
+                if (title.toLowerCase().includes('futter')) basePrio = parseInt(document.getElementById('prioFood').textContent) || 0;
+                else if (title.toLowerCase().includes('jagd')) basePrio = parseInt(document.getElementById('prioHunt').textContent) || 0;
+                else if (title.toLowerCase().includes('flucht')) basePrio = parseInt(document.getElementById('prioEscape').textContent) || 0;
+                showFullListModal(title, decoded, basePrio);
+            } catch(err){
+                console.error('Fehler beim Dekodieren der Liste', err);
+            }
+        }
+    });
+
+    renderEmptyGrid();
+    goToRound(0);
+}
+
+/* --- Passwort-Logik / Unlock --- */
+const PASSWORD = '7.8_K?)5SJb7';
+
+function unlockApp(){
+    const appRoot = document.getElementById('appRoot');
+    const template = document.getElementById('appTemplate');
+    const passwordScreen = document.getElementById('passwordScreen');
+    if (!appRoot || !template) return;
+
+    const clone = template.content.cloneNode(true);
+    appRoot.appendChild(clone);
+    appRoot.classList.remove('hidden');
+    if (passwordScreen) passwordScreen.remove();
+
+    initAppDom();
+}
+
+function setupPasswordGate(){
+    const form = document.getElementById('passwordForm');
+    const input = document.getElementById('passwordInput');
+    const errorEl = document.getElementById('passwordError');
+
+    if (!form || !input) return;
+
+    form.addEventListener('submit', (e)=>{
+        e.preventDefault();
+        const value = input.value || '';
+        if (value === PASSWORD){
+            errorEl.textContent = '';
+            unlockApp();
+        } else {
+            errorEl.textContent = 'Falsches Passwort.';
+            input.value = '';
+            input.focus();
+        }
+    });
+
+    // Fokus beim Laden auf das Passwortfeld
+    setTimeout(()=>{ input.focus(); }, 0);
+}
+
+/* Passwort-Schutz initialisieren */
+setupPasswordGate();
+</script>
+</body>
+</html>
