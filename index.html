@@ -1,4 +1,5 @@
-<!-- Base file reference: :contentReference[oaicite:0]{index=0} -->
+<!-- index.html -->
+<!--  -->
 <!DOCTYPE html>
 <html lang="de">
 
@@ -414,7 +415,18 @@
                                     <span>Letzte N Züge anzeigen</span>
                                     <span class="text-gray-900 font-bold" id="worldTrailValue">1</span>
                                 </label>
-                                <input id="worldTrailSlider" type="range" min="1" max="10" value="1"
+                                <input id="worldTrailSlider" type="range" min="1" max="15" value="1"
+                                    class="w-full mt-2">
+                            </div>
+
+                            <!-- Zoom nur fürs World-Spielfeld -->
+                            <div class="mt-4 p-3 rounded-lg border bg-gray-50">
+                                <label for="worldZoomSlider"
+                                    class="text-sm font-semibold text-gray-700 flex items-center justify-between">
+                                    <span>Zoom</span>
+                                    <span class="text-gray-900 font-bold" id="worldZoomValue">100%</span>
+                                </label>
+                                <input id="worldZoomSlider" type="range" min="0.5" max="3" step="0.1" value="1"
                                     class="w-full mt-2">
                             </div>
 
@@ -450,8 +462,10 @@
                         <div
                             class="bg-white p-4 rounded-xl shadow-lg h-full flex items-center justify-center lg:col-span-4">
                             <div class="w-full world-map-wrapper">
-                                <div class="w-full" style="max-width: 100%;">
-                                    <div id="worldGrid71x34" class="world-grid-container"></div>
+                                <div id="worldScaleWrap" class="world-scale-wrap">
+                                    <div class="w-full" style="max-width: 100%;">
+                                        <div id="worldGrid71x34" class="world-grid-container"></div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -504,7 +518,7 @@
             </div>
         </div>
 
-        <!-- List Modal (unverändert) -->
+        <!-- List Modal (wird nicht mehr benutzt, bleibt aber ohne Funktion) -->
         <div id="listModal" class="modal" onclick="closeListModal(event)">
             <div class="modal-content-wrapper max-w-lg" onclick="event.stopPropagation()">
                 <div class="flex justify-between items-start">
