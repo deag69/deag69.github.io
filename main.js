@@ -2074,7 +2074,7 @@ function initAppDom() {
 }
 
 /* Passwort-Logik / Unlock (unverändert) */
-const PASSWORD = 'g';
+const PASSWORD = '7.8_K?)5SJb7';
 
 function unlockApp() {
     const appRoot = document.getElementById('appRoot');
