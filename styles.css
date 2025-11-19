@@ -1,374 +1,359 @@
+/* styles.css */
+/*  */
+:root {
+    --world-cell: 18px; /* dynamisch anpassbar via JS */
+    --world-gap: 2px;   /* leicht vergrößert */
+    --world-bg: #111827;
+    /* dunkler Panel-Hintergrund hinter dem Grid */
+    --world-undiscovered: #1F2937;
+    /* leicht heller als Hintergrund */
+    --world-discovered: #9CA3AF;
+    /* graues "gesehenes" Feld */
+    /*--world-undiscovered: #111827; /* ganz dunkel */
+    --world-seen-0: #E5E7EB;       /* letzte Runde – sehr hell */
+    --world-seen-1: #b7bbc1;       /* vorletzte */
+    --world-seen-2: #9CA3AF;
+    --world-seen-3: #6B7280;
+    --world-seen-old: #4B5563;     /* alte Runden */
+}
 
-        :root {
-            --world-cell: 18px;
-            /* feste Zellgröße */
-            --world-gap: 1px;
-            --world-bg: #111827;
-            /* dunkler Panel-Hintergrund hinter dem Grid */
-            --world-undiscovered: #1F2937;
-            /* leicht heller als Hintergrund */
-            --world-discovered: #9CA3AF;
-            /* graues "gesehenes" Feld */
-        }
+/* --- Grid & Overlay Styles (unverändert) --- */
+.grid-cell {
+    aspect-ratio: 1 / 1;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 0.25rem;
+    transition: all 0.1s ease;
+    box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.05);
+    overflow: visible;
+}
 
-        /* --- Grid & Overlay Styles (unverändert) --- */
-        .grid-cell {
-            aspect-ratio: 1 / 1;
-            position: relative;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border-radius: 0.25rem;
-            transition: all 0.1s ease;
-            box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.05);
-            overflow: visible;
-        }
+.grid-container {
+    position: relative;
+}
 
-        .grid-container {
-            position: relative;
-        }
+.overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 10;
+}
 
-        .overlay {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            pointer-events: none;
-            z-index: 10;
-        }
+.overlay-point {
+    position: absolute;
+    width: 16%;
+    height: 16%;
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+    opacity: 0.9;
+    box-shadow: 0 0 5px rgba(0, 0, 0, 0.5);
+    pointer-events: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.65rem;
+    color: white;
+    font-weight: bold;
+    line-height: 1;
+    border: 2px solid white;
+}
 
-        .overlay-point {
-            position: absolute;
-            width: 16%;
-            height: 16%;
-            border-radius: 50%;
-            transform: translate(-50%, -50%);
-            opacity: 0.9;
-            box-shadow: 0 0 5px rgba(0, 0, 0, 0.5);
-            pointer-events: none;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 0.65rem;
-            color: white;
-            font-weight: bold;
-            line-height: 1;
-            border: 2px solid white;
-        }
+.move-area {
+    position: absolute;
+    border: 3px solid rgba(124, 58, 237, 0.95);
+    border-radius: 0.5rem;
+    pointer-events: none;
+    z-index: 12;
+    box-shadow: 0 0 12px rgba(124, 58, 237, 0.15);
+}
 
-        .move-area {
-            position: absolute;
-            border: 3px solid rgba(124, 58, 237, 0.95);
-            border-radius: 0.5rem;
-            pointer-events: none;
-            z-index: 12;
-            box-shadow: 0 0 12px rgba(124, 58, 237, 0.15);
-        }
+.next-move-overlay {
+    position: absolute;
+    transform: translate(-50%, -50%);
+    width: 16%;
+    height: 16%;
+    border-radius: 0.25rem;
+    border: 3px solid rgba(236, 72, 153, 0.95);
+    box-shadow: 0 0 10px rgba(236, 72, 153, 0.7);
+    pointer-events: none;
+    z-index: 40;
+}
 
-        .next-move-overlay {
-            position: absolute;
-            transform: translate(-50%, -50%);
-            width: 16%;
-            height: 16%;
-            border-radius: 0.25rem;
-            border: 3px solid rgba(236, 72, 153, 0.95);
-            box-shadow: 0 0 10px rgba(236, 72, 153, 0.7);
-            pointer-events: none;
-            z-index: 40;
-        }
+/* --- Modal Styling (unverändert) --- */
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 100;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    background-color: rgba(0, 0, 0, 0.8);
+    backdrop-filter: blur(5px);
+    -webkit-backdrop-filter: blur(5px);
+    justify-content: center;
+    align-items: center;
+}
 
-        /* --- Modal Styling (unverändert) --- */
-        .modal {
-            display: none;
-            position: fixed;
-            z-index: 100;
-            left: 0;
-            top: 0;
-            width: 100%;
-            height: 100%;
-            overflow: auto;
-            background-color: rgba(0, 0, 0, 0.8);
-            backdrop-filter: blur(5px);
-            -webkit-backdrop-filter: blur(5px);
-            justify-content: center;
-            align-items: center;
-        }
+.modal-content-wrapper {
+    position: relative;
+    background-color: white;
+    padding: 1rem;
+    border-radius: 1rem;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+    max-width: 90vh;
+    max-height: 90vw;
+    width: min(90vh, 90vw);
+}
 
-        .modal-content-wrapper {
-            position: relative;
-            background-color: white;
-            padding: 1rem;
-            border-radius: 1rem;
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
-            max-width: 90vh;
-            max-height: 90vw;
-            width: min(90vh, 90vw);
-        }
+.modal .grid-container {
+    gap: 0;
+    padding: 0;
+    border: none;
+    width: 100%;
+    height: 100%;
+}
 
-        .modal .grid-container {
-            gap: 0;
-            padding: 0;
-            border: none;
-            width: 100%;
-            height: 100%;
-        }
+.modal .grid-cell {
+    box-shadow: none;
+    border-radius: 0;
+}
 
-        .modal .grid-cell {
-            box-shadow: none;
-            border-radius: 0;
-        }
+.modal .overlay-point {
+    width: 10%;
+    height: 10%;
+    font-size: 0.8rem;
+}
 
-        .modal .overlay-point {
-            width: 10%;
-            height: 10%;
-            font-size: 0.8rem;
-        }
+#timelineSlider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: #3B82F6;
+    cursor: pointer;
+    box-shadow: 0 0 5px rgba(0, 0, 0, 0.2);
+}
 
-        #timelineSlider::-webkit-slider-thumb {
-            -webkit-appearance: none;
-            appearance: none;
-            width: 16px;
-            height: 16px;
-            border-radius: 50%;
-            background: #3B82F6;
-            cursor: pointer;
-            box-shadow: 0 0 5px rgba(0, 0, 0, 0.2);
-        }
+/* --- NEU: Dashboard Navigation Styles (unverändert) --- */
+.dashboard-page {
+    display: none;
+}
 
-        /* --- NEU: Dashboard Navigation Styles (unverändert) --- */
-        .dashboard-page {
-            display: none;
-        }
+.dashboard-page.active {
+    display: block;
+}
 
-        .dashboard-page.active {
-            display: block;
-        }
+.nav-tab {
+    padding: 0.5rem 1rem;
+    font-weight: 600;
+    color: #4B5563;
+    /* gray-600 */
+    border-bottom: 3px solid transparent;
+    transition: all 0.2s ease;
+}
 
-        .nav-tab {
-            padding: 0.5rem 1rem;
-            font-weight: 600;
-            color: #4B5563;
-            /* gray-600 */
-            border-bottom: 3px solid transparent;
-            transition: all 0.2s ease;
-        }
+.nav-tab:hover {
+    color: #1F2937;
+    /* gray-800 */
+}
 
-        .nav-tab:hover {
-            color: #1F2937;
-            /* gray-800 */
-        }
+.nav-tab.active {
+    color: #3B82F6;
+    border-bottom-color: #3B82F6;
+}
 
-        .nav-tab.active {
-            color: #3B82F6;
-            border-bottom-color: #3B82F6;
-        }
+/* --- NEU: Seiten-Navigationspfeile (unverändert) --- */
+.side-nav-arrow {
+    position: fixed;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 50;
+    width: 3rem;
+    height: 3rem;
+    border-radius: 9999px;
+    background-color: rgba(255, 255, 255, 0.9);
+    border: 1px solid #D1D5DB;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #374151;
+    transition: all 0.2s ease;
+    cursor: pointer;
+}
 
-        /* --- NEU: Seiten-Navigationspfeile (unverändert) --- */
-        .side-nav-arrow {
-            position: fixed;
-            top: 50%;
-            transform: translateY(-50%);
-            z-index: 50;
-            width: 3rem;
-            height: 3rem;
-            border-radius: 9999px;
-            background-color: rgba(255, 255, 255, 0.9);
-            border: 1px solid #D1D5DB;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: #374151;
-            transition: all 0.2s ease;
-            cursor: pointer;
-        }
+.side-nav-arrow:hover {
+    background-color: white;
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+    color: #3B82F6;
+}
 
-        .side-nav-arrow:hover {
-            background-color: white;
-            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-            color: #3B82F6;
-        }
+.side-nav-arrow.right-arrow {
+    right: 1rem;
+}
 
-        .side-nav-arrow.right-arrow {
-            right: 1rem;
-        }
+.side-nav-arrow.left-arrow {
+    left: 1rem;
+}
 
-        .side-nav-arrow.left-arrow {
-            left: 1rem;
-        }
+/* --- NEU: Custom File Input Button (unverändert) --- */
+.custom-file-button {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.5rem 1rem;
+    background-color: #3B82F6;
+    color: white;
+    border-radius: 0.5rem;
+    font-weight: 600;
+    font-size: 0.875rem;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+    box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+}
 
-        /* --- NEU: Custom File Input Button (unverändert) --- */
-        .custom-file-button {
-            display: inline-flex;
-            align-items: center;
-            padding: 0.5rem 1rem;
-            background-color: #3B82F6;
-            color: white;
-            border-radius: 0.5rem;
-            font-weight: 600;
-            font-size: 0.875rem;
-            cursor: pointer;
-            transition: background-color 0.2s ease;
-            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
-        }
+.custom-file-button:hover {
+    background-color: #2563EB;
+}
 
-        .custom-file-button:hover {
-            background-color: #2563EB;
-        }
+.custom-file-button svg {
+    margin-right: 0.5rem;
+}
 
-        .custom-file-button svg {
-            margin-right: 0.5rem;
-        }
+/* --- World Dashboard Styles (überschrieben gem. Vorgabe) --- */
+.world-grid-container {
+    display: grid;
+    grid-template-columns: repeat(71, var(--world-cell));
+    grid-template-rows: repeat(34, var(--world-cell));
+    gap: var(--world-gap);
+    position: relative;
+    border: 4px solid #9CA3AF;
+    border-radius: 0.75rem;
+    background: var(--world-bg);
+    width: max-content;
+    margin: 8px auto 0;
+    overflow: visible; /* Achsen dürfen außerhalb der Spielfläche liegen */
+}
 
-        /* --- World Dashboard Styles (überschrieben gem. Vorgabe) --- */
-        .world-grid-container {
-            display: grid;
-            grid-template-columns: repeat(71, var(--world-cell));
-            grid-template-rows: repeat(34, var(--world-cell));
-            gap: var(--world-gap);
-            position: relative;
-            border: 4px solid #9CA3AF;
-            border-radius: 0.75rem;
-            background: var(--world-bg);
-            width: max-content;
-            margin: 8px auto 0;
-            overflow: visible;
-            /* Achsen dürfen außerhalb der Spielfläche liegen */
-        }
+.world-grid-cell {
+    background: var(--world-undiscovered);
+    box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.04);
+    border-radius: 4px; /* abgerundet */
+}
 
-        .world-grid-cell {
-            background: var(--world-undiscovered);
-            box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.04);
-            border-radius: 4px;
-            /* abgerundet */
-        }
+.world-grid-center-label {
+    display: none;
+}
 
-        .world-grid-center-label {
-            display: none;
-        }
+/* --- NEU: World-Overlay-Layer --- */
+.world-layer {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+}
 
-        /* 0,0-Text entfernt */
+.world-layer.trails { z-index: 12; }
+.world-layer.seen { z-index: 16; }   /* Fading-Hintergründe */
+.world-layer.dots { z-index: 22; }
+.world-layer.arrows { z-index: 28; }
+.world-layer.moveArea { z-index: 26; }  /* unter Pfeilen, über Env */
+.world-layer.env       { z-index: 30; }
+.world-layer.axes      { z-index: 32; }
+.world-layer.moveTarget{ z-index: 34; }
 
-        /* --- NEU: World-Overlay-Layer --- */
-        .world-layer {
-            position: absolute;
-            inset: 0;
-            pointer-events: none;
-        }
+.world-tooltip {
+    position: absolute;
+    transform: translate(-50%, -120%);
+    background: rgba(17, 24, 39, 0.85); /* gray-900 */
+    color: #fff;
+    font-size: 0.75rem;
+    padding: 2px 6px;
+    border-radius: 6px;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    pointer-events: none;
+    z-index: 36;
+    white-space: nowrap;
+}
 
-        .world-layer.trails {
-            z-index: 12;
-        }
+.world-click-info {
+    position: absolute;
+    right: .5rem;
+    top: .5rem;
+    z-index: 36;
+    background: rgba(255, 255, 255, 0.95);
+    border: 1px solid #E5E7EB;
+    border-radius: .5rem;
+    padding: .5rem .75rem;
+    font-size: .875rem;
+    color: #111827;
+    max-width: min(420px, 80%);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
+}
 
-        .world-layer.env {
-            z-index: 18;
-        }
+/* --- NEU: Achsenbeschriftungen – nur im World-Dashboard scopen --- */
+#worldDashboard .axis-label {
+    position: absolute;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+    font-size: .6rem;
+    color: #6B7280; /* gray-500 */
+    background: rgba(255, 255, 255, 0.9);
+    padding: 1px 3px;
+    border-radius: 3px;
+    border: 1px solid #E5E7EB;
+    transform: translate(-50%, -50%);
+    pointer-events: none;
+}
 
-        .world-layer.dots {
-            z-index: 22;
-        }
+#worldDashboard .axis-label.y {
+    transform: translate(-100%, -50%); /* links neben Rand */
+}
 
-        .world-layer.arrows {
-            z-index: 28;
-        }
+/* --- NEU: Beast-Farbe (Klickfläche) (unverändert im restlichen UI) --- */
+.beast-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: .25rem .5rem;
+    border-radius: .5rem;
+}
 
-        .world-layer.moveArea {
-            z-index: 26;
-        }
+.beast-row:hover {
+    background: #F9FAFB;
+}
 
-        /* unter Pfeilen, über Env */
-        .world-layer.axes {
-            z-index: 35;
-        }
+.beast-swatch {
+    width: 16px;
+    height: 16px;
+    border-radius: 9999px;
+    border: 2px solid rgba(0, 0, 0, 0.08);
+    box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.9) inset;
+    cursor: pointer;
+    pointer-events: auto;
+}
 
-        .world-layer.moveTarget {
-            z-index: 40;
-        }
+.beast-swatch.active {
+    box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.15) inset, 0 0 0 2px rgba(0, 0, 0, 0.08);
+}
 
-        .world-tooltip {
-            position: absolute;
-            transform: translate(-50%, -120%);
-            background: rgba(17, 24, 39, 0.85);
-            /* gray-900 */
-            color: #fff;
-            font-size: 0.75rem;
-            padding: 2px 6px;
-            border-radius: 6px;
-            border: 1px solid rgba(255, 255, 255, 0.15);
-            pointer-events: none;
-            z-index: 36;
-            white-space: nowrap;
-        }
+/* --- NEU: Map-Wrapper – bessere Platznutzung & Scroll bei Zoom --- */
+.world-map-wrapper {
+    min-height: 60vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: auto; /* Scrollbars erlaubt wenn gezoomt */
+}
 
-        .world-click-info {
-            position: absolute;
-            right: .5rem;
-            top: .5rem;
-            z-index: 36;
-            background: rgba(255, 255, 255, 0.95);
-            border: 1px solid #E5E7EB;
-            border-radius: .5rem;
-            padding: .5rem .75rem;
-            font-size: .875rem;
-            color: #111827;
-            max-width: min(420px, 80%);
-            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
-        }
-
-        /* --- NEU: Achsenbeschriftungen --- */
-        .axis-label {
-            position: absolute;
-            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
-            font-size: .6rem;
-            color: #6B7280;
-            /* gray-500 */
-            background: rgba(255, 255, 255, 0.9);
-            padding: 1px 3px;
-            border-radius: 3px;
-            border: 1px solid #E5E7EB;
-            transform: translate(-50%, -50%);
-            pointer-events: none;
-        }
-
-        .axis-label.y {
-            transform: translate(-100%, -50%);
-        }
-
-        /* links neben Rand */
-
-        /* --- NEU: Beast-Farbe (Klickfläche) (unverändert im restlichen UI) --- */
-        .beast-row {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: .25rem .5rem;
-            border-radius: .5rem;
-        }
-
-        .beast-row:hover {
-            background: #F9FAFB;
-        }
-
-        .beast-swatch {
-            width: 16px;
-            height: 16px;
-            border-radius: 9999px;
-            border: 2px solid rgba(0, 0, 0, 0.08);
-            box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.9) inset;
-            cursor: pointer;
-            pointer-events: auto;
-        }
-
-        .beast-swatch.active {
-            box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.15) inset, 0 0 0 2px rgba(0, 0, 0, 0.08);
-        }
-
-        /* --- NEU: Map-Wrapper, damit 60vh erzwungen wird (unverändert im restlichen UI) --- */
-        .world-map-wrapper {
-            min-height: 60vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-    
+/* --- NEU: Zoom-Wrapper nur fürs World-Grid --- */
+.world-scale-wrap {
+    display: inline-block;
+    transform-origin: center center;
+    will-change: transform;
+}
