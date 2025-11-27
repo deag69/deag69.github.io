@@ -1,23 +1,1117 @@
 /* styles.css */
-/*  */
+/* Basis: bestehende Grid-/World-/Modal-Styles + neues UI-Layout ohne Tailwind */
+
+/* ----------------------------------------------------------
+   CSS Variablen
+---------------------------------------------------------- */
 :root {
+    /* World Grid (bestehend) */
     --world-cell: 18px; /* dynamisch anpassbar via JS */
-    --world-gap: 2px;   /* leicht vergrößert */
+    --world-gap: 2px;
     --world-bg: #111827;
-    /* dunkler Panel-Hintergrund hinter dem Grid */
     --world-undiscovered: #1F2937;
-    /* leicht heller als Hintergrund */
     --world-discovered: #9CA3AF;
-    /* graues "gesehenes" Feld */
-    /*--world-undiscovered: #111827; /* ganz dunkel */
-    --world-seen-0: #E5E7EB;       /* letzte Runde – sehr hell */
-    --world-seen-1: #b7bbc1;       /* vorletzte */
+    --world-seen-0: #E5E7EB;   /* letzte Runde – sehr hell */
+    --world-seen-1: #b7bbc1;   /* vorletzte Runde */
     --world-seen-2: #9CA3AF;
     --world-seen-3: #6B7280;
-    --world-seen-old: #4B5563;     /* alte Runden */
+    --world-seen-old: #4B5563; /* alte Runden */
+
+    /* Allgemeines UI */
+    --color-bg-page: #F3F4F6;          /* gray-100 */
+    --color-bg-panel: #FFFFFF;         /* weiß */
+    --color-bg-panel-muted: #F9FAFB;   /* gray-50 */
+    --color-border-subtle: #E5E7EB;    /* gray-200 */
+    --color-border-strong: #D1D5DB;    /* gray-300 */
+    --color-text-main: #111827;        /* gray-900 */
+    --color-text-muted: #6B7280;       /* gray-500 */
+    --color-text-soft: #9CA3AF;        /* gray-400 */
+    --color-heading: #111827;
+
+    --color-agent-blue: #3B82F6;
+    --color-food-orange: #F97316;
+    --color-enemy-red: #EF4444;
+    --color-enemy-green: #10B981;
+    --color-move-pink: #EC4899;
+    --color-area-purple: #7C3AED;
+
+    --radius-card: 0.75rem;
+    --radius-card-lg: 1rem;
+    --radius-pill: 9999px;
+
+    --shadow-soft: 0 1px 3px rgba(15, 23, 42, 0.1),
+                   0 1px 2px rgba(15, 23, 42, 0.06);
+    --shadow-card: 0 10px 15px -3px rgba(15, 23, 42, 0.1),
+                   0 4px 6px -2px rgba(15, 23, 42, 0.05);
+    --shadow-strong: 0 20px 25px -5px rgba(15, 23, 42, 0.15),
+                     0 10px 10px -5px rgba(15, 23, 42, 0.04);
 }
 
-/* --- Grid & Overlay Styles (unverändert) --- */
+/* ----------------------------------------------------------
+   Reset & Grundlayout
+---------------------------------------------------------- */
+
+*, *::before, *::after {
+    box-sizing: border-box;
+}
+
+html, body {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+}
+
+body.app-body {
+    min-height: 100vh;
+    background-color: var(--color-bg-page);
+    color: var(--color-text-main);
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+        sans-serif;
+    padding: 1rem;
+}
+
+@media (min-width: 640px) {
+    body.app-body {
+        padding: 2rem;
+    }
+}
+
+a {
+    color: inherit;
+    text-decoration: none;
+}
+
+a:hover {
+    text-decoration: none;
+}
+
+/* Hidden-Helfer (ersetzt Tailwind .hidden) */
+.hidden {
+    display: none !important;
+}
+
+/* ----------------------------------------------------------
+   Typografie & Badges
+---------------------------------------------------------- */
+
+.heading-1 {
+    font-size: 1.875rem;
+    line-height: 2.25rem;
+    font-weight: 700;
+    color: var(--color-heading);
+}
+
+@media (min-width: 640px) {
+    .heading-1 {
+        font-size: 2.25rem;
+    }
+}
+
+.heading-2 {
+    font-size: 1.25rem;
+    line-height: 1.6;
+    font-weight: 600;
+    color: var(--color-heading);
+    margin-bottom: 0.5rem;
+}
+
+.text-muted {
+    color: var(--color-text-muted);
+    font-size: 0.875rem;
+}
+
+.text-soft {
+    color: var(--color-text-soft);
+}
+
+.text-mono {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
+        "Liberation Mono", "Courier New", monospace;
+}
+
+.badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.25rem 0.5rem;
+    border-radius: var(--radius-pill);
+    font-size: 0.75rem;
+    font-weight: 500;
+    cursor: pointer;
+    gap: 0.25rem;
+}
+
+.badge--gray {
+    background-color: #E5E7EB;
+    color: #374151;
+}
+
+.badge--gray:hover {
+    background-color: #D1D5DB;
+}
+
+/* Hervorhebung für Prioritäts-Items in Listen */
+.priority-highlight {
+    color: var(--color-move-pink);
+    font-weight: 700;
+    border-bottom: 2px solid var(--color-move-pink);
+}
+
+/* ----------------------------------------------------------
+   Buttons
+---------------------------------------------------------- */
+
+.btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 0.5rem 0.75rem;
+    border-radius: 0.5rem;
+    border: 1px solid transparent;
+    font-size: 0.875rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.15s ease, color 0.15s ease,
+        border-color 0.15s ease, box-shadow 0.15s ease,
+        transform 0.05s ease;
+    text-align: center;
+    white-space: nowrap;
+}
+
+.btn:disabled {
+    cursor: default;
+    opacity: 0.6;
+}
+
+.btn--primary {
+    background-color: var(--color-agent-blue);
+    color: #fff;
+    box-shadow: var(--shadow-soft);
+}
+
+.btn--primary:hover {
+    background-color: #2563EB;
+}
+
+.btn--secondary {
+    background-color: #ffffff;
+    color: #374151;
+    border-color: var(--color-border-subtle);
+    box-shadow: var(--shadow-soft);
+}
+
+.btn--secondary:hover {
+    background-color: #F9FAFB;
+}
+
+.btn--ghost {
+    background: transparent;
+    border-color: transparent;
+    color: inherit;
+    padding: 0.375rem;
+    border-radius: 0.375rem;
+}
+
+.btn--icon {
+    padding: 0.375rem;
+    border-radius: 0.375rem;
+    min-width: auto;
+}
+
+.btn--file-upload {
+    background-color: var(--color-agent-blue);
+    color: #fff;
+    font-size: 0.875rem;
+    box-shadow: var(--shadow-soft);
+    border-radius: 0.5rem;
+    padding-inline: 1rem;
+}
+
+.btn--file-upload svg {
+    margin-right: 0.5rem;
+}
+
+/* Playback Play/Pause Button – Farbvarianten werden im JS via Klassen
+   umgeschaltet, daher hier nur Basisshape */
+.btn--round {
+    border-radius: 9999px;
+    padding: 0.5rem;
+}
+
+/* ----------------------------------------------------------
+   Formulare & Inputs
+---------------------------------------------------------- */
+
+.input {
+    width: 100%;
+    padding: 0.5rem 0.75rem;
+    border-radius: 0.5rem;
+    border: 1px solid var(--color-border-subtle);
+    background-color: #F9FAFB;
+    font-size: 0.875rem;
+    color: var(--color-text-main);
+    outline: none;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease,
+        background-color 0.15s ease;
+}
+
+.input:focus {
+    border-color: var(--color-agent-blue);
+    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.3);
+    background-color: #FFFFFF;
+}
+
+.input--password {
+    /* eigene Klasse für Passwortfeld, aktuell identisch */
+}
+
+.input--number {
+    font-family: inherit;
+    text-align: left;
+}
+
+.input--mono {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
+        "Liberation Mono", "Courier New", monospace;
+}
+
+/* Slider */
+
+.slider {
+    width: 100%;
+    cursor: pointer;
+}
+
+.slider--timeline {
+    height: 0.5rem;
+    border-radius: 9999px;
+    background-color: #1F2937;
+}
+
+/* vorhandenes Styling für Timeline-Thumb */
+#timelineSlider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: #3B82F6;
+    cursor: pointer;
+    box-shadow: 0 0 5px rgba(0, 0, 0, 0.2);
+}
+
+#timelineSlider::-moz-range-thumb {
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: #3B82F6;
+    cursor: pointer;
+    border: none;
+}
+
+/* ----------------------------------------------------------
+   App Shell & Layout
+---------------------------------------------------------- */
+
+.app-root {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+.app-shell {
+    max-width: 95vw;
+    margin: 0 auto;
+}
+
+.app-header {
+    margin-bottom: 1rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid var(--color-border-strong);
+}
+
+.app-main {
+    margin-top: 1rem;
+    position: relative;
+}
+
+/* Tabs / Navigation */
+
+.tab-nav {
+    margin-bottom: 0.5rem;
+    background-color: #FFFFFF;
+    border-radius: var(--radius-card);
+    box-shadow: var(--shadow-soft);
+    padding: 0.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+}
+
+/* Dashboard-Seiten (bestehender Code) */
+.dashboard-page {
+    display: none;
+}
+
+.dashboard-page.active {
+    display: block;
+}
+
+.nav-tab {
+    padding: 0.5rem 1rem;
+    font-weight: 600;
+    color: #4B5563; /* gray-600 */
+    border-bottom: 3px solid transparent;
+    transition: all 0.2s ease;
+    background: transparent;
+    border-radius: 0.5rem;
+    cursor: pointer;
+}
+
+.nav-tab:hover {
+    color: #1F2937; /* gray-800 */
+    background-color: #F3F4F6;
+}
+
+.nav-tab.active {
+    color: #3B82F6;
+    border-bottom-color: #3B82F6;
+    background-color: #EFF6FF;
+}
+
+/* Seiten-Navigationspfeile (bestehender Code, leicht angepasst) */
+.side-nav-arrow {
+    position: fixed;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 50;
+    width: 3rem;
+    height: 3rem;
+    border-radius: 9999px;
+    background-color: rgba(255, 255, 255, 0.9);
+    border: 1px solid #D1D5DB;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1),
+        0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #374151;
+    transition: all 0.2s ease;
+    cursor: pointer;
+}
+
+.side-nav-arrow:hover {
+    background-color: #FFFFFF;
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1),
+        0 4px 6px -2px rgba(0, 0, 0, 0.05);
+    color: #3B82F6;
+}
+
+.side-nav-arrow--right {
+    right: 1rem;
+}
+
+.side-nav-arrow--left {
+    left: 1rem;
+}
+
+/* ----------------------------------------------------------
+   Karten / Panels
+---------------------------------------------------------- */
+
+.card,
+.panel {
+    background-color: var(--color-bg-panel);
+    border-radius: var(--radius-card);
+    border: 1px solid var(--color-border-subtle);
+    box-shadow: var(--shadow-card);
+    padding: 1.5rem;
+}
+
+.card--compact,
+.panel--compact {
+    padding: 1rem;
+    box-shadow: var(--shadow-soft);
+}
+
+.card--muted {
+    background-color: var(--color-bg-panel-muted);
+}
+
+.card--legend {
+    background-color: var(--color-bg-panel-muted);
+    border-color: var(--color-border-subtle);
+}
+
+.card--server-logs {
+    font-size: 0.875rem;
+    overflow: auto;
+}
+
+.panel-title {
+    font-size: 1.125rem;
+    font-weight: 700;
+    color: var(--color-heading);
+    margin-bottom: 0.75rem;
+}
+
+/* ----------------------------------------------------------
+   Passwort-Screen
+---------------------------------------------------------- */
+
+.password-screen {
+    min-height: 60vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.password-card {
+    width: 100%;
+    max-width: 24rem;
+    border-radius: var(--radius-card-lg);
+    border: 1px solid var(--color-border-subtle);
+    background-color: #FFFFFF;
+    padding: 1.5rem;
+    box-shadow: var(--shadow-strong);
+}
+
+.password-title {
+    font-size: 1.25rem;
+    font-weight: 700;
+    text-align: center;
+    margin-bottom: 1rem;
+}
+
+.password-subtitle {
+    font-size: 0.875rem;
+    color: var(--color-text-muted);
+    text-align: center;
+    margin-bottom: 1rem;
+}
+
+.password-form {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.password-error {
+    font-size: 0.75rem;
+    color: #EF4444;
+    min-height: 1rem;
+    margin-top: 0.25rem;
+    text-align: center;
+}
+
+/* ----------------------------------------------------------
+   Globale Control-Bar
+---------------------------------------------------------- */
+
+.control-bar {
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    background-color: rgba(15, 23, 42, 0.95); /* slate-900 */
+    backdrop-filter: blur(10px);
+    border-radius: var(--radius-card);
+    border: 1px solid #1F2937; /* slate-800/700 */
+    box-shadow: var(--shadow-soft);
+    margin-bottom: 1.5rem;
+}
+
+.control-bar-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.5rem 0.75rem;
+}
+
+.control-bar-title {
+    color: #E5E7EB;
+    font-size: 0.875rem;
+    font-weight: 600;
+}
+
+.control-bar-toggle {
+    color: #F9FAFB;
+    background: transparent;
+    border-radius: 0.375rem;
+    border: none;
+    cursor: pointer;
+    padding: 0.375rem;
+}
+
+.control-bar-toggle:hover {
+    background-color: rgba(15, 23, 42, 0.8);
+}
+
+.control-bar-inner {
+    padding: 0 0.75rem 0.75rem 0.75rem;
+}
+
+.control-bar-row {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    align-items: stretch;
+    margin-bottom: 0.75rem;
+}
+
+@media (min-width: 1024px) {
+    .control-bar-row {
+        flex-direction: row;
+        align-items: center;
+        justify-content: space-between;
+    }
+}
+
+.control-bar-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    align-items: flex-start;
+}
+
+@media (min-width: 640px) {
+    .control-bar-group {
+        flex-direction: row;
+        align-items: center;
+    }
+}
+
+.control-bar-text-light {
+    color: #E5E7EB;
+    font-size: 0.875rem;
+}
+
+.control-bar-status {
+    min-width: 120px;
+}
+
+/* Zeitstrahl & Playback Box */
+
+.control-bar-timeline {
+    border-radius: var(--radius-card);
+    background-color: rgba(15, 23, 42, 0.7);
+    border: 1px solid #1F2937;
+    padding: 0.75rem;
+}
+
+.control-bar-timeline-title {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: #E5E7EB;
+    margin-bottom: 0.5rem;
+}
+
+.control-bar-timeline-row {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+@media (min-width: 768px) {
+    .control-bar-timeline-row {
+        flex-direction: row;
+        align-items: center;
+    }
+}
+
+/* FPS Input Block */
+
+.fps-box {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    background-color: #020617;
+    padding: 0.5rem;
+    border-radius: 0.5rem;
+    border: 1px solid #1F2937;
+}
+
+.fps-box-label {
+    font-size: 0.875rem;
+    color: #E5E7EB;
+    white-space: nowrap;
+}
+
+.fps-input {
+    width: 4rem;
+    padding: 0.25rem 0.25rem;
+    border-radius: 0.375rem;
+    border: 1px solid #4B5563;
+    background-color: #020617;
+    color: #E5E7EB;
+    text-align: center;
+    font-size: 0.875rem;
+}
+
+/* ----------------------------------------------------------
+   Beaster Dashboard Layout
+---------------------------------------------------------- */
+
+.dashboard-layout--beaster {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 1.5rem;
+}
+
+@media (min-width: 1024px) {
+    .dashboard-layout--beaster {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+
+    .beaster-panel--env {
+        grid-column: 1;
+    }
+
+    .beaster-panel--grid {
+        grid-column: 2;
+    }
+
+    .beaster-panel--lists {
+        grid-column: 3;
+    }
+
+    .beaster-panel--logs {
+        grid-column: 4;
+    }
+}
+
+/* Env-String Anzeige (links) */
+
+.env-grid-wrapper {
+    margin-top: 0.5rem;
+}
+
+/* 7x7-Mini-Grid des Env-Strings */
+#envGridDisplay {
+    display: grid;
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+    gap: 0.25rem;
+    padding: 0.5rem;
+    background-color: #F3F4F6;
+    border-radius: 0.5rem;
+    font-size: 0.75rem;
+}
+
+/* Koordinaten-Wrapper (mittleres 7x7-Grid) */
+
+.coordinate-wrapper {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    max-width: 22rem;
+    margin: 0 auto;
+}
+
+.coordinate-header-row {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.75rem;
+    color: #4B5563;
+    padding-inline: 0.25rem;
+    padding-top: 0.25rem;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
+        "Liberation Mono", "Courier New", monospace;
+}
+
+.coordinate-main-row {
+    display: flex;
+    flex: 1 1 auto;
+}
+
+.coordinate-y-labels {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    font-size: 0.75rem;
+    color: #4B5563;
+    padding-right: 0.25rem;
+    padding-block: 0.25rem;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
+        "Liberation Mono", "Courier New", monospace;
+}
+
+/* 7x7-Grid im Beaster Dashboard */
+#gridContainer {
+    position: relative;
+    display: grid;
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+    gap: 0.25rem;
+    padding: 0.25rem;
+    border-radius: 0.75rem;
+    border: 4px solid #9CA3AF;
+    background-color: #111827;
+    overflow: hidden;
+    width: 100%;
+    aspect-ratio: 1 / 1;
+}
+
+/* Zoom-Button */
+.zoom-button {
+    margin-top: 1rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 0.75rem;
+    border-radius: 0.5rem;
+    border: 1px solid var(--color-border-subtle);
+    background-color: #E5E7EB;
+    color: #374151;
+    cursor: pointer;
+    font-size: 0.875rem;
+}
+
+.zoom-button:disabled {
+    opacity: 0.5;
+    cursor: default;
+}
+
+.zoom-button:not(:disabled):hover {
+    background-color: #D1D5DB;
+}
+
+/* Legende */
+
+.legend-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.5rem;
+    font-size: 0.875rem;
+    color: #374151;
+}
+
+.legend-dot {
+    display: inline-block;
+    width: 0.75rem;
+    height: 0.75rem;
+    border-radius: 9999px;
+    margin-right: 0.5rem;
+}
+
+.legend-dot--agent {
+    background-color: var(--color-agent-blue);
+}
+
+.legend-dot--food {
+    background-color: var(--color-food-orange);
+}
+
+.legend-dot--enemy-big {
+    background-color: var(--color-enemy-red);
+}
+
+.legend-dot--enemy-small {
+    background-color: var(--color-enemy-green);
+}
+
+.legend-ring {
+    display: inline-block;
+    width: 0.75rem;
+    height: 0.75rem;
+    border-radius: 9999px;
+    margin-right: 0.5rem;
+    box-sizing: border-box;
+}
+
+.legend-ring--move {
+    box-shadow: 0 0 0 2px var(--color-move-pink),
+        0 0 0 4px #FFFFFF;
+}
+
+.legend-ring--area {
+    box-shadow: 0 0 0 2px var(--color-area-purple),
+        0 0 0 4px #FFFFFF;
+}
+
+/* Prioritäten & Listen Panel */
+
+.priority-lists {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    font-size: 0.875rem;
+}
+
+.priority-section {
+    border-bottom: 1px solid var(--color-border-subtle);
+    padding-bottom: 0.5rem;
+}
+
+.priority-section-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 0.5rem;
+}
+
+.priority-section-title {
+    font-weight: 600;
+    color: var(--color-heading);
+}
+
+.priority-section-sub {
+    font-size: 0.875rem;
+    color: var(--color-text-muted);
+}
+
+.eye-icon {
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    color: #9CA3AF;
+    padding: 0.125rem;
+}
+
+.eye-icon:hover {
+    color: var(--color-food-orange);
+}
+
+/* Server-Logs Panel */
+
+.server-log-status {
+    font-size: 0.875rem;
+    color: var(--color-text-muted);
+}
+
+.server-log-entry {
+    padding: 0.5rem;
+    border-radius: 0.5rem;
+    border: 1px solid var(--color-border-subtle);
+    background-color: #F9FAFB;
+    font-size: 0.875rem;
+}
+
+.server-log-entry + .server-log-entry {
+    margin-top: 0.5rem;
+}
+
+/* ----------------------------------------------------------
+   World Dashboard Layout
+---------------------------------------------------------- */
+
+.dashboard-layout--world {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 1.5rem;
+}
+
+@media (min-width: 1024px) {
+    .dashboard-layout--world {
+        grid-template-columns: 1.1fr 3.2fr 1.1fr; /* 1 – 4 – 1 */
+    }
+
+    .world-panel--sidebar {
+        grid-column: 1;
+    }
+
+    .world-panel--grid {
+        grid-column: 2;
+    }
+
+    .world-panel--logs {
+        grid-column: 3;
+    }
+}
+
+/* Beast-Liste */
+
+.world-beast-list {
+    max-height: 15rem;
+    overflow: auto;
+    border-radius: 0.5rem;
+    border: 1px solid var(--color-border-subtle);
+    padding: 0.5rem;
+    background-color: #F9FAFB;
+}
+
+/* --- NEU: Beast-Farbe (bestehender Code) --- */
+.beast-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: .25rem .5rem;
+    border-radius: .5rem;
+}
+
+.beast-row:hover {
+    background: #F9FAFB;
+}
+
+.beast-swatch {
+    width: 16px;
+    height: 16px;
+    border-radius: 9999px;
+    border: 2px solid rgba(0, 0, 0, 0.08);
+    box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.9) inset;
+    cursor: pointer;
+    pointer-events: auto;
+}
+
+.beast-swatch.active {
+    box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.15) inset,
+        0 0 0 2px rgba(0, 0, 0, 0.08);
+}
+
+/* Slider-Boxen links */
+
+.world-slider-box {
+    margin-top: 1.25rem;
+    padding: 0.75rem;
+    border-radius: 0.5rem;
+    border: 1px solid var(--color-border-subtle);
+    background-color: #F9FAFB;
+}
+
+.world-slider-label-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: #374151;
+}
+
+.world-slider-value {
+    font-size: 0.875rem;
+    font-weight: 700;
+    color: #111827;
+}
+
+.world-slider {
+    margin-top: 0.5rem;
+}
+
+/* Legende rechts/links im World Dashboard kann card--legend verwenden */
+
+/* Spielfeld-Panel Mitte */
+
+.world-grid-panel {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+}
+
+.world-map-wrapper {
+    min-height: 60vh;
+    width: 95%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: auto; /* Scrollbars erlaubt wenn gezoomt */
+}
+
+/* Zoom-Wrapper nur fürs World-Grid */
+.world-scale-wrap {
+    display: inline-block;
+    transform-origin: center center;
+    will-change: transform;
+}
+
+/* ----------------------------------------------------------
+   World Grid & Overlays (bestehender Code, leicht konsolidiert)
+---------------------------------------------------------- */
+
+.world-grid-container {
+    display: grid;
+    grid-template-columns: repeat(71, var(--world-cell));
+    grid-template-rows: repeat(34, var(--world-cell));
+    gap: var(--world-gap);
+    position: relative;
+    border: 4px solid #9CA3AF;
+    border-radius: 0.75rem;
+    background: var(--world-bg);
+    width: max-content;
+    margin: 8px auto 0;
+    overflow: visible; /* Achsen dürfen außerhalb liegen */
+}
+
+.world-grid-cell {
+    background: var(--world-undiscovered);
+    box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.04);
+    border-radius: 4px;
+}
+
+.world-grid-center-label {
+    display: none;
+}
+
+/* Layer */
+
+.world-layer {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+}
+
+.world-layer.trails { z-index: 12; }
+.world-layer.seen { z-index: 16; }
+.world-layer.dots { z-index: 22; }
+.world-layer.arrows { z-index: 28; }
+.world-layer.moveArea { z-index: 26; }
+.world-layer.env { z-index: 30; }
+.world-layer.axes { z-index: 32; }
+.world-layer.moveTarget { z-index: 34; }
+
+/* Tooltip */
+
+.world-tooltip {
+    position: absolute;
+    transform: translate(-50%, -120%);
+    background: rgba(17, 24, 39, 0.85);
+    color: #fff;
+    font-size: 0.75rem;
+    padding: 2px 6px;
+    border-radius: 6px;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    pointer-events: none;
+    z-index: 36;
+    white-space: nowrap;
+}
+
+.world-click-info {
+    position: absolute;
+    right: .5rem;
+    top: .5rem;
+    z-index: 36;
+    background: rgba(255, 255, 255, 0.95);
+    border: 1px solid #E5E7EB;
+    border-radius: .5rem;
+    padding: .5rem .75rem;
+    font-size: .875rem;
+    color: #111827;
+    max-width: min(420px, 80%);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
+}
+
+/* Achsenbeschriftungen */
+
+#worldDashboard .axis-label {
+    position: absolute;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
+        "Liberation Mono", "Courier New", monospace;
+    font-size: .6rem;
+    color: #6B7280;
+    background: rgba(255, 255, 255, 0.9);
+    padding: 1px 3px;
+    border-radius: 3px;
+    border: 1px solid #E5E7EB;
+    transform: translate(-50%, -50%);
+    pointer-events: none;
+}
+
+#worldDashboard .axis-label.y {
+    transform: translate(-100%, -50%);
+}
+
+/* ----------------------------------------------------------
+   Grid & Overlay Styles (7x7) – bestehend
+---------------------------------------------------------- */
+
 .grid-cell {
     aspect-ratio: 1 / 1;
     position: relative;
@@ -84,7 +1178,10 @@
     z-index: 40;
 }
 
-/* --- Modal Styling (unverändert) --- */
+/* ----------------------------------------------------------
+   Modal Styling (bestehend)
+---------------------------------------------------------- */
+
 .modal {
     display: none;
     position: fixed;
@@ -112,99 +1209,22 @@
     width: min(90vh, 90vw);
 }
 
-.modal .grid-container {
+/* Spezielles 7x7 Grid im Modal */
+#gridContainerModal {
+    position: relative;
+    display: grid;
+    grid-template-columns: repeat(7, minmax(0, 1fr));
     gap: 0;
-    padding: 0;
-    border: none;
+    border-radius: 1rem;
+    overflow: hidden;
     width: 100%;
-    height: 100%;
+    aspect-ratio: 1 / 1;
 }
 
-.modal .grid-cell {
-    box-shadow: none;
-    border-radius: 0;
-}
+/* ----------------------------------------------------------
+   Custom File Button (bestehender Block – jetzt Alias zu btn)
+---------------------------------------------------------- */
 
-.modal .overlay-point {
-    width: 10%;
-    height: 10%;
-    font-size: 0.8rem;
-}
-
-#timelineSlider::-webkit-slider-thumb {
-    -webkit-appearance: none;
-    appearance: none;
-    width: 16px;
-    height: 16px;
-    border-radius: 50%;
-    background: #3B82F6;
-    cursor: pointer;
-    box-shadow: 0 0 5px rgba(0, 0, 0, 0.2);
-}
-
-/* --- NEU: Dashboard Navigation Styles (unverändert) --- */
-.dashboard-page {
-    display: none;
-}
-
-.dashboard-page.active {
-    display: block;
-}
-
-.nav-tab {
-    padding: 0.5rem 1rem;
-    font-weight: 600;
-    color: #4B5563;
-    /* gray-600 */
-    border-bottom: 3px solid transparent;
-    transition: all 0.2s ease;
-}
-
-.nav-tab:hover {
-    color: #1F2937;
-    /* gray-800 */
-}
-
-.nav-tab.active {
-    color: #3B82F6;
-    border-bottom-color: #3B82F6;
-}
-
-/* --- NEU: Seiten-Navigationspfeile (unverändert) --- */
-.side-nav-arrow {
-    position: fixed;
-    top: 50%;
-    transform: translateY(-50%);
-    z-index: 50;
-    width: 3rem;
-    height: 3rem;
-    border-radius: 9999px;
-    background-color: rgba(255, 255, 255, 0.9);
-    border: 1px solid #D1D5DB;
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: #374151;
-    transition: all 0.2s ease;
-    cursor: pointer;
-}
-
-.side-nav-arrow:hover {
-    background-color: white;
-    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-    color: #3B82F6;
-}
-
-.side-nav-arrow.right-arrow {
-    right: 1rem;
-}
-
-.side-nav-arrow.left-arrow {
-    left: 1rem;
-}
-
-/* --- NEU: Custom File Input Button (unverändert) --- */
 .custom-file-button {
     display: inline-flex;
     align-items: center;
@@ -216,7 +1236,7 @@
     font-size: 0.875rem;
     cursor: pointer;
     transition: background-color 0.2s ease;
-    box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+    box-shadow: var(--shadow-soft);
 }
 
 .custom-file-button:hover {
@@ -227,133 +1247,264 @@
     margin-right: 0.5rem;
 }
 
-/* --- World Dashboard Styles (überschrieben gem. Vorgabe) --- */
-.world-grid-container {
+/* ----------------------------------------------------------
+   Environment Builder
+---------------------------------------------------------- */
+
+/* Layout */
+
+.envbuilder-layout {
+    margin-top: 1.5rem;
     display: grid;
-    grid-template-columns: repeat(71, var(--world-cell));
-    grid-template-rows: repeat(34, var(--world-cell));
-    gap: var(--world-gap);
-    position: relative;
-    border: 4px solid #9CA3AF;
-    border-radius: 0.75rem;
-    background: var(--world-bg);
-    width: max-content;
-    margin: 8px auto 0;
-    overflow: visible; /* Achsen dürfen außerhalb der Spielfläche liegen */
+    grid-template-columns: minmax(0, 1fr);
+    gap: 1.5rem;
+    align-items: flex-start;
 }
 
-.world-grid-cell {
-    background: var(--world-undiscovered);
-    box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.04);
-    border-radius: 4px; /* abgerundet */
+@media (min-width: 1024px) {
+    .envbuilder-layout {
+        grid-template-columns: minmax(0, 2fr) minmax(0, 3fr) minmax(0, 2fr);
+    }
 }
 
-.world-grid-center-label {
-    display: none;
+.envbuilder-grid-section {
+    /* einfach card */
 }
 
-/* --- NEU: World-Overlay-Layer --- */
-.world-layer {
-    position: absolute;
-    inset: 0;
-    pointer-events: none;
+.envbuilder-sidebar {
+    /* ebenfalls card */
 }
 
-.world-layer.trails { z-index: 12; }
-.world-layer.seen { z-index: 16; }   /* Fading-Hintergründe */
-.world-layer.dots { z-index: 22; }
-.world-layer.arrows { z-index: 28; }
-.world-layer.moveArea { z-index: 26; }  /* unter Pfeilen, über Env */
-.world-layer.env       { z-index: 30; }
-.world-layer.axes      { z-index: 32; }
-.world-layer.moveTarget{ z-index: 34; }
+/* Grid 7x7 im Builder */
 
-.world-tooltip {
-    position: absolute;
-    transform: translate(-50%, -120%);
-    background: rgba(17, 24, 39, 0.85); /* gray-900 */
-    color: #fff;
-    font-size: 0.75rem;
-    padding: 2px 6px;
-    border-radius: 6px;
-    border: 1px solid rgba(255, 255, 255, 0.15);
-    pointer-events: none;
-    z-index: 36;
-    white-space: nowrap;
+.env-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 48px);
+    grid-template-rows: repeat(7, 48px);
+    gap: 6px;
 }
 
-.world-click-info {
-    position: absolute;
-    right: .5rem;
-    top: .5rem;
-    z-index: 36;
-    background: rgba(255, 255, 255, 0.95);
-    border: 1px solid #E5E7EB;
-    border-radius: .5rem;
-    padding: .5rem .75rem;
-    font-size: .875rem;
-    color: #111827;
-    max-width: min(420px, 80%);
-    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
-}
-
-/* --- NEU: Achsenbeschriftungen – nur im World-Dashboard scopen --- */
-#worldDashboard .axis-label {
-    position: absolute;
-    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
-    font-size: .6rem;
-    color: #6B7280; /* gray-500 */
-    background: rgba(255, 255, 255, 0.9);
-    padding: 1px 3px;
-    border-radius: 3px;
-    border: 1px solid #E5E7EB;
-    transform: translate(-50%, -50%);
-    pointer-events: none;
-}
-
-#worldDashboard .axis-label.y {
-    transform: translate(-100%, -50%); /* links neben Rand */
-}
-
-/* --- NEU: Beast-Farbe (Klickfläche) (unverändert im restlichen UI) --- */
-.beast-row {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: .25rem .5rem;
-    border-radius: .5rem;
-}
-
-.beast-row:hover {
-    background: #F9FAFB;
-}
-
-.beast-swatch {
-    width: 16px;
-    height: 16px;
-    border-radius: 9999px;
-    border: 2px solid rgba(0, 0, 0, 0.08);
-    box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.9) inset;
-    cursor: pointer;
-    pointer-events: auto;
-}
-
-.beast-swatch.active {
-    box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.15) inset, 0 0 0 2px rgba(0, 0, 0, 0.08);
-}
-
-/* --- NEU: Map-Wrapper – bessere Platznutzung & Scroll bei Zoom --- */
-.world-map-wrapper {
-    min-height: 60vh;
+.env-cell {
+    width: 48px;
+    height: 48px;
+    border-radius: 0.5rem;
     display: flex;
     align-items: center;
     justify-content: center;
-    overflow: auto; /* Scrollbars erlaubt wenn gezoomt */
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
+        "Liberation Mono", "Courier New", monospace;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.12s ease, box-shadow 0.12s ease,
+        transform 0.05s ease;
+    box-shadow: inset 0 0 0 1px rgba(15, 23, 42, 0.06);
+    user-select: none;
 }
 
-/* --- NEU: Zoom-Wrapper nur fürs World-Grid --- */
-.world-scale-wrap {
-    display: inline-block;
-    transform-origin: center center;
-    will-change: transform;
+.env-cell:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 10px rgba(15, 23, 42, 0.15);
 }
+
+.env-cell-empty {
+    background-color: #E5E7EB;
+    color: #6B7280;
+}
+
+.env-cell-food {
+    background-color: #FDBA74;
+    color: #7C2D12;
+}
+
+.env-cell-enemy-small {
+    background-color: #A7F3D0;
+    color: #064E3B;
+}
+
+.env-cell-enemy-big {
+    background-color: #FCA5A5;
+    color: #7F1D1D;
+}
+
+.env-cell-center {
+    background-color: #DBEAFE;
+    color: #1D4ED8;
+    cursor: not-allowed;
+}
+
+/* Palette im Builder */
+
+.palette {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.palette-item {
+    border-radius: 0.75rem;
+    border: 1px solid #E5E7EB;
+    background-color: #F9FAFB;
+    padding: 0.5rem 0.75rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    cursor: grab;
+    transition: box-shadow 0.12s ease, transform 0.05s ease,
+        background-color 0.12s ease;
+}
+
+.palette-item:hover {
+    background-color: #FFFFFF;
+    box-shadow: 0 4px 12px rgba(15, 23, 42, 0.12);
+}
+
+.palette-symbol {
+    width: 1.5rem;
+    height: 1.5rem;
+    border-radius: 9999px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 0.9rem;
+}
+
+.palette-symbol-food {
+    background-color: #FDBA74;
+    color: #7C2D12;
+}
+
+.palette-symbol-enemy-small {
+    background-color: #A7F3D0;
+    color: #064E3B;
+}
+
+.palette-symbol-enemy-big {
+    background-color: #FCA5A5;
+    color: #7F1D1D;
+}
+
+.palette-symbol-empty {
+    background-color: #E5E7EB;
+    color: #6B7280;
+}
+
+.pill-label {
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+}
+
+/* History-Badges im Builder */
+.history-badge {
+    @apply; /* nur als Marker, wird unten ersetzt – NICHT verwendet */
+}
+
+/* Wir nutzen die generische .badge / .badge--gray Klassen */
+
+/* ----------------------------------------------------------
+   Kleinere UI-Helfer
+---------------------------------------------------------- */
+
+.icon {
+    width: 1.25rem;
+    height: 1.25rem;
+}
+
+.icon--sm {
+    width: 1rem;
+    height: 1rem;
+}
+
+/* ----------------------------------------------------------
+   Emulierte Utility-Klassen für main.js
+   (damit die JavaScript-Logik unverändert funktionieren kann)
+   Diese sind keine Tailwind-Integration, sondern nur kleine
+   Hilfsklassen mit denselben Namen.
+---------------------------------------------------------- */
+
+/* Hintergrundfarben */
+
+.bg-gray-50 { background-color: #F9FAFB; }
+.bg-gray-100 { background-color: #F3F4F6; }
+.bg-gray-200 { background-color: #E5E7EB; }
+.bg-gray-300 { background-color: #D1D5DB; }
+
+.bg-grid-light { background-color: #F3F4F6; }
+
+.bg-agent-blue { background-color: var(--color-agent-blue); }
+.bg-food-orange { background-color: var(--color-food-orange); }
+.bg-enemy-red { background-color: var(--color-enemy-red); }
+.bg-enemy-green { background-color: var(--color-enemy-green); }
+.bg-pink {background-color: var(--color-move-pink);}
+
+/* Textfarben */
+
+.text-white { color: #FFFFFF; }
+.text-xs { font-size: 0.75rem; }
+.text-sm { font-size: 0.875rem; }
+.text-lg { font-size: 1.125rem; }
+
+.text-gray-400 { color: #9CA3AF; }
+.text-gray-500 { color: #6B7280; }
+.text-gray-600 { color: #4B5563; }
+.text-gray-700 { color: #374151; }
+.text-gray-800 { color: #1F2937; }
+
+.text-red-600 { color: #DC2626; }
+
+.text-food-orange { color: var(--color-food-orange); }
+.text-enemy-red { color: var(--color-enemy-red); }
+.text-enemy-green { color: var(--color-enemy-green); }
+.text-agent-blue { color: var(--color-agent-blue); }
+.text-move-pink { color: var(--color-move-pink); }
+.event-split {
+    background-color: var(--color-border-strong);
+    border: 2px solid  var(--color-move-pink);
+}
+
+
+/* Borders */
+
+.border { border: 1px solid var(--color-border-subtle); }
+.border-gray-200 { border-color: #E5E7EB; }
+.border-gray-300 { border-color: #D1D5DB; }
+.border-b-2 { border-bottom: 2px solid currentColor; }
+.border-move-pink { border-color: var(--color-move-pink); }
+
+/* Rounding & Shadow */
+
+.rounded-md { border-radius: 0.375rem; }
+.rounded-sm { border-radius: 0.125rem; }
+
+.shadow-inner {
+    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.06);
+}
+
+/* Padding / Margin – nur das, was im JS gebraucht wird */
+
+.p-1 { padding: 0.25rem; }
+.p-2 { padding: 0.5rem; }
+
+.mt-1 { margin-top: 0.25rem; }
+
+/* Display-Helfer */
+
+.font-mono {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
+        "Liberation Mono", "Courier New", monospace;
+}
+
+.font-bold { font-weight: 700; }
+.font-semibold { font-weight: 600; }
+
+.flex { display: flex; }
+.items-center { align-items: center; }
+.justify-center { justify-content: center; }
+
+/* Aspect Ratio (Env-String-Kacheln) */
+.aspect-square {
+    aspect-ratio: 1 / 1;
+}
+
