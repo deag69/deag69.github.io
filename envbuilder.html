@@ -4,193 +4,54 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <link rel="stylesheet" href="styles.css">
     <title>Environment Builder</title>
-
-    <!-- Tailwind CDN -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    fontFamily: { sans: ['Inter', 'system-ui', 'sans-serif'] }
-                }
-            }
-        };
-    </script>
-
-    <style>
-        .env-grid {
-            display: grid;
-            grid-template-columns: repeat(7, 48px);
-            grid-template-rows: repeat(7, 48px);
-            gap: 6px;
-        }
-
-        .env-cell {
-            width: 48px;
-            height: 48px;
-            border-radius: 0.5rem;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
-            font-size: 0.9rem;
-            font-weight: 600;
-            cursor: pointer;
-            transition: background-color 0.12s ease, box-shadow 0.12s ease, transform 0.05s ease;
-            box-shadow: inset 0 0 0 1px rgba(15, 23, 42, 0.06);
-            user-select: none;
-        }
-
-        .env-cell:hover {
-            transform: translateY(-1px);
-            box-shadow: 0 4px 10px rgba(15, 23, 42, 0.15);
-        }
-
-        .env-cell-empty {
-            background-color: #E5E7EB;
-            /* gray-200 */
-            color: #6B7280;
-            /* gray-500 */
-        }
-
-        .env-cell-food {
-            background-color: #FDBA74;
-            /* orange-300 */
-            color: #7C2D12;
-            /* orange-900 */
-        }
-
-        .env-cell-enemy-small {
-            background-color: #A7F3D0;
-            /* emerald-200 */
-            color: #064E3B;
-            /* emerald-900 */
-        }
-
-        .env-cell-enemy-big {
-            background-color: #FCA5A5;
-            /* red-300 */
-            color: #7F1D1D;
-            /* red-900 */
-        }
-
-        .env-cell-center {
-            background-color: #DBEAFE;
-            /* blue-100 */
-            color: #1D4ED8;
-            /* blue-700 */
-            cursor: not-allowed;
-        }
-
-        .badge {
-            @apply inline-flex items-center px-2 py-1 rounded-full text-xs font-medium cursor-pointer;
-        }
-
-        .badge-gray {
-            background-color: #E5E7EB;
-            /* gray-200 */
-            color: #374151;
-            /* gray-700 */
-        }
-
-        .badge-gray:hover {
-            background-color: #D1D5DB;
-            /* gray-300 */
-        }
-
-        .palette-item {
-            border-radius: 0.75rem;
-            border: 1px solid #E5E7EB;
-            background-color: #F9FAFB;
-            padding: 0.5rem 0.75rem;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            cursor: grab;
-            transition: box-shadow 0.12s ease, transform 0.05s ease, background-color 0.12s ease;
-        }
-
-        .palette-item:hover {
-            background-color: #FFFFFF;
-            box-shadow: 0 4px 12px rgba(15, 23, 42, 0.12);
-        }
-
-        .palette-symbol {
-            width: 1.5rem;
-            height: 1.5rem;
-            border-radius: 9999px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: 700;
-            font-size: 0.9rem;
-        }
-
-        .palette-symbol-food {
-            background-color: #FDBA74;
-            color: #7C2D12;
-        }
-
-        .palette-symbol-enemy-small {
-            background-color: #A7F3D0;
-            color: #064E3B;
-        }
-
-        .palette-symbol-enemy-big {
-            background-color: #FCA5A5;
-            color: #7F1D1D;
-        }
-
-        .palette-symbol-empty {
-            background-color: #E5E7EB;
-            color: #6B7280;
-        }
-
-        .pill-label {
-            font-size: 0.7rem;
-            text-transform: uppercase;
-            letter-spacing: 0.08em;
-        }
-    </style>
+    <link rel="stylesheet" href="styles.css" />
 </head>
 
-<body class="bg-gray-100 min-h-screen p-4 sm:p-8 font-sans">
-    <div class="max-w-6xl mx-auto">
+<body class="app-body">
+    <div class="app-shell">
         <!-- Header -->
-        <header class="flex items-center justify-between mb-6 pb-4 border-b border-gray-300">
+        <header class="app-header"
+            style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #D1D5DB;">
             <div>
-                <h1 class="text-3xl font-bold text-gray-800">Environment Builder</h1>
-                <p class="text-sm text-gray-500 mt-1">Baue einen Env-String für den Pybiester Game-Analyzer.</p>
+                <h1 class="heading-1">Environment Builder</h1>
+                <p class="text-muted" style="margin-top: 0.25rem;">
+                    Baue einen Env-String für den Pybiester
+                    Game-Analyzer.
+                </p>
             </div>
-            <a href="index.html"
-                class="inline-flex items-center px-3 py-2 rounded-lg bg-white border border-gray-300 text-sm font-semibold text-gray-700 shadow-sm hover:bg-gray-50">
+            <a href="index.html" class="btn btn--secondary" style="box-shadow: var(--shadow-soft);">
                 Zurück
             </a>
         </header>
+
         <!-- Tabs / Navigation -->
-        <nav class="bg-white rounded-xl shadow-sm p-2 flex items-center justify-center space-x-4">
-            <a href="index.html" class="nav-tab">Biester Dashboard</a>
-            <a href="index.html" class="nav-tab">World Dashboard</a>
-            <a href="envbuilder.html" class="nav-tab active">Environment Builder</a>
+        <nav class="tab-nav">
+            <a href="index.html" class="nav-tab">
+                Biester Dashboard
+            </a>
+            <a href="index.html" class="nav-tab">
+                World Dashboard
+            </a>
+            <a href="envbuilder.html" class="nav-tab active">
+                Environment Builder
+            </a>
         </nav>
 
         <!-- Box: fertiger String + Copy -->
-        <section class="mb-6 mt-6">
-            <div
-                class="bg-white border border-gray-200 rounded-xl shadow-sm p-4 sm:p-5 flex flex-col sm:flex-row gap-3 items-stretch sm:items-center">
-                <div class="flex-1">
-                    <label for="envStringOutput" class="block text-xs font-semibold text-gray-500 mb-1">
+        <section style="margin-top: 1.5rem; margin-bottom: 1.5rem;">
+            <div class="card card--compact" style="display: flex; flex-direction: column; gap: 0.75rem;">
+                <div style="flex: 1;">
+                    <label for="envStringOutput" class="text-muted"
+                        style="font-size: 0.75rem; font-weight: 600; display: block; margin-bottom: 0.25rem;">
                         Aktueller id_energy_env String
                     </label>
-                    <input id="envStringOutput" type="text" readonly
-                        class="w-full text-xs sm:text-sm font-mono px-3 py-2 rounded-lg border border-gray-300 bg-gray-50 text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        value="id_energy_env = '# #...............................................'">
+                    <input id="envStringOutput" type="text" readonly class="input input--mono"
+                        style="font-size: 0.8rem;"
+                        value="id_energy_env = '# #...............................................'" />
                 </div>
-                <div class="flex sm:flex-col justify-center sm:justify-between gap-2">
-                    <button id="copyButton"
-                        class="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-sm font-semibold text-white shadow-sm">
+                <div style="display: flex; flex-direction: column; gap: 0.5rem; justify-content: center;">
+                    <button id="copyButton" type="button" class="btn btn--primary">
                         Env String kopieren
                     </button>
                 </div>
@@ -198,122 +59,174 @@
         </section>
 
         <!-- Eingaben + Grid + Palette -->
-        <main class="grid grid-cols-1 lg:grid-cols-[minmax(0,2fr)_minmax(0,3fr)_minmax(0,2fr)] gap-6">
+        <main class="envbuilder-layout">
             <!-- Linke Spalte: Beast ID & Energie -->
-            <section class="space-y-6">
+            <section class="panel envbuilder-sidebar">
                 <!-- Beast ID -->
-                <div class="bg-white border border-gray-200 rounded-xl shadow-sm p-4 sm:p-5">
-                    <h2 class="text-lg font-semibold text-gray-800 mb-3">Beast ID</h2>
-                    <label for="idInput" class="block text-xs font-semibold text-gray-500 mb-1">
+                <div class="card card--compact">
+                    <h2 class="heading-2">Beast ID</h2>
+                    <label for="idInput" class="text-muted"
+                        style="font-size: 0.75rem; font-weight: 600; display: block; margin-bottom: 0.25rem;">
                         Beast ID
                     </label>
-                    <input id="idInput" type="text" placeholder="z.B. 18"
-                        class="w-full px-3 py-2 rounded-lg border border-gray-300 bg-gray-50 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500 mb-3" />
+                    <input id="idInput" type="text" placeholder="z.B. 18" class="input"
+                        style="margin-bottom: 0.75rem;" />
 
-                    <div class="mb-2 flex items-center justify-between">
-                        <span class="pill-label text-gray-500">Verlauf Beast IDs</span>
-                        <button id="clearIdHistory" type="button" class="text-xs text-gray-400 hover:text-gray-600">
+                    <div
+                        style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.25rem;">
+                        <span class="pill-label text-gray-500">
+                            Verlauf Beast IDs
+                        </span>
+                        <button id="clearIdHistory" type="button" class="btn btn--ghost"
+                            style="font-size: 0.75rem; color: #9CA3AF;">
                             Verlauf löschen
                         </button>
                     </div>
-                    <div id="idHistoryContainer" class="flex flex-wrap gap-2 text-xs">
+                    <div id="idHistoryContainer"
+                        style="display: flex; flex-wrap: wrap; gap: 0.25rem; font-size: 0.75rem;">
                         <!-- History-Badges -->
                     </div>
                 </div>
 
                 <!-- Energie -->
-                <div class="bg-white border border-gray-200 rounded-xl shadow-sm p-4 sm:p-5">
-                    <h2 class="text-lg font-semibold text-gray-800 mb-3">Energie</h2>
-                    <label for="energyInput" class="block text-xs font-semibold text-gray-500 mb-1">
+                <div class="card card--compact" style="margin-top: 1.5rem;">
+                    <h2 class="heading-2">Energie</h2>
+                    <label for="energyInput" class="text-muted"
+                        style="font-size: 0.75rem; font-weight: 600; display: block; margin-bottom: 0.25rem;">
                         Energie (Kommazahl mit Punkt)
                     </label>
                     <input id="energyInput" type="number" step="0.0000000001" placeholder="z.B. 12.76393202250021"
-                        class="w-full px-3 py-2 rounded-lg border border-gray-300 bg-gray-50 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500 mb-3" />
+                        class="input input--number" style="margin-bottom: 0.75rem;" />
 
-                    <div class="mb-2 flex items-center justify-between">
-                        <span class="pill-label text-gray-500">Verlauf Energien</span>
-                        <button id="clearEnergyHistory" type="button" class="text-xs text-gray-400 hover:text-gray-600">
+                    <div
+                        style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.25rem;">
+                        <span class="pill-label text-gray-500">
+                            Verlauf Energien
+                        </span>
+                        <button id="clearEnergyHistory" type="button" class="btn btn--ghost"
+                            style="font-size: 0.75rem; color: #9CA3AF;">
                             Verlauf löschen
                         </button>
                     </div>
-                    <div id="energyHistoryContainer" class="flex flex-wrap gap-2 text-xs mb-3">
+                    <div id="energyHistoryContainer"
+                        style="display: flex; flex-wrap: wrap; gap: 0.25rem; font-size: 0.75rem; margin-bottom: 0.75rem;">
                         <!-- History-Badges -->
                     </div>
 
-                    <div class="mb-2">
-                        <span class="pill-label text-gray-500">Vorschläge</span>
+                    <div style="margin-bottom: 0.25rem;">
+                        <span class="pill-label text-gray-500">
+                            Vorschläge
+                        </span>
                     </div>
-                    <div id="energySuggestions" class="flex flex-wrap gap-2 text-xs">
+                    <div id="energySuggestions"
+                        style="display: flex; flex-wrap: wrap; gap: 0.25rem; font-size: 0.75rem;">
                         <!-- Vorschlag-Badges -->
                     </div>
                 </div>
             </section>
 
             <!-- Mitte: Grid -->
-            <section class="bg-white border border-gray-200 rounded-xl shadow-sm p-4 sm:p-5 flex flex-col items-center">
-                <h2 class="text-lg font-semibold text-gray-800 mb-3 self-start">7x7 Spielfeld</h2>
-                <p class="text-xs text-gray-500 mb-4 self-start">
-                    Ziehe Objekte von rechts auf das Spielfeld. Die mittlere Kachel (blau) bleibt immer leer.
+            <section class="panel envbuilder-grid-section"
+                style="display: flex; flex-direction: column; align-items: center;">
+                <h2 class="heading-2" style="align-self: flex-start;">
+                    7x7 Spielfeld
+                </h2>
+                <p class="text-muted" style="font-size: 0.75rem; margin-bottom: 1rem; align-self: flex-start;">
+                    Ziehe Objekte von rechts auf das Spielfeld. Die
+                    mittlere Kachel (blau) bleibt immer leer.
                 </p>
-                <div class="flex-1 flex items-center justify-center">
+                <div style="flex: 1; display: flex; align-items: center; justify-content: center;">
                     <div id="envGrid" class="env-grid"></div>
                 </div>
-                <p class="mt-4 text-xs text-gray-400 text-center">
-                    Mapping: Index 0 = oben links, Index 48 = unten rechts. Mitte (Index 24) ist fix und bleibt <code
-                        class="font-mono">.</code>.
+                <p class="text-muted text-mono" style="margin-top: 1rem; font-size: 0.75rem; text-align: center;">
+                    Mapping: Index 0 = oben links, Index 48 = unten
+                    rechts. Mitte (Index 24) ist fix und bleibt
+                    <code>.</code>.
                 </p>
             </section>
 
             <!-- Rechte Spalte: Palette -->
-            <section class="bg-white border border-gray-200 rounded-xl shadow-sm p-4 sm:p-5">
-                <h2 class="text-lg font-semibold text-gray-800 mb-3">Objekt-Palette</h2>
-                <p class="text-xs text-gray-500 mb-4">
-                    Diese Objekte kannst du per Drag &amp; Drop auf das Spielfeld ziehen. Pro Kachel ist immer genau ein
-                    Objekt erlaubt.
+            <section class="panel envbuilder-sidebar">
+                <h2 class="heading-2">Objekt-Palette</h2>
+                <p class="text-muted" style="font-size: 0.75rem;">
+                    Diese Objekte kannst du per Drag &amp; Drop auf
+                    das Spielfeld ziehen. Pro Kachel ist immer genau
+                    ein Objekt erlaubt.
                 </p>
 
-                <div class="space-y-3">
+                <div class="palette" style="margin-top: 1rem;">
                     <div class="palette-item" draggable="true" data-char="*">
                         <div>
-                            <div class="text-sm font-semibold text-gray-800">Futter</div>
-                            <div class="text-xs text-gray-500">Symbol: <code class="font-mono">*</code></div>
+                            <div style="font-size: 0.9rem; font-weight: 600;">
+                                Futter
+                            </div>
+                            <div class="text-muted text-mono" style="font-size: 0.75rem;">
+                                Symbol:
+                                <code>*</code>
+                            </div>
                         </div>
-                        <div class="palette-symbol palette-symbol-food">*</div>
+                        <div class="palette-symbol palette-symbol-food">
+                            *
+                        </div>
                     </div>
 
                     <div class="palette-item" draggable="true" data-char="<">
                         <div>
-                            <div class="text-sm font-semibold text-gray-800">Kleiner Gegner</div>
-                            <div class="text-xs text-gray-500">Symbol: <code class="font-mono">&lt;</code></div>
+                            <div style="font-size: 0.9rem; font-weight: 600;">
+                                Kleiner Gegner
+                            </div>
+                            <div class="text-muted text-mono" style="font-size: 0.75rem;">
+                                Symbol:
+                                <code>&lt;</code>
+                            </div>
                         </div>
-                        <div class="palette-symbol palette-symbol-enemy-small">&lt;</div>
+                        <div class="palette-symbol palette-symbol-enemy-small">
+                            &lt;
+                        </div>
                     </div>
 
                     <div class="palette-item" draggable="true" data-char=">">
                         <div>
-                            <div class="text-sm font-semibold text-gray-800">Großer Gegner</div>
-                            <div class="text-xs text-gray-500">Symbol: <code class="font-mono">&gt;</code></div>
+                            <div style="font-size: 0.9rem; font-weight: 600;">
+                                Großer Gegner
+                            </div>
+                            <div class="text-muted text-mono" style="font-size: 0.75rem;">
+                                Symbol:
+                                <code>&gt;</code>
+                            </div>
                         </div>
-                        <div class="palette-symbol palette-symbol-enemy-big">&gt;</div>
+                        <div class="palette-symbol palette-symbol-enemy-big">
+                            &gt;
+                        </div>
                     </div>
 
                     <div class="palette-item" draggable="true" data-char=".">
                         <div>
-                            <div class="text-sm font-semibold text-gray-800">Leeres Feld</div>
-                            <div class="text-xs text-gray-500">Symbol: <code class="font-mono">.</code></div>
+                            <div style="font-size: 0.9rem; font-weight: 600;">
+                                Leeres Feld
+                            </div>
+                            <div class="text-muted text-mono" style="font-size: 0.75rem;">
+                                Symbol:
+                                <code>.</code>
+                            </div>
                         </div>
-                        <div class="palette-symbol palette-symbol-empty">.</div>
+                        <div class="palette-symbol palette-symbol-empty">
+                            .
+                        </div>
                     </div>
                 </div>
 
-                <div class="mt-6 pt-4 border-t border-gray-200 text-xs text-gray-500">
-                    Tipp: Du kannst jederzeit Beast ID oder Energie ändern – der Env String aktualisiert sich
+                <div class="text-muted"
+                    style="margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid #E5E7EB; font-size: 0.75rem;">
+                    Tipp: Du kannst jederzeit Beast ID oder Energie
+                    ändern – der Env String aktualisiert sich
                     automatisch.
                 </div>
             </section>
         </main>
     </div>
 
+    <!-- vorhandenes JS unverändert übernommen -->
     <script>
         document.addEventListener('DOMContentLoaded', () => {
             const GRID_SIZE = 7;
@@ -341,7 +254,6 @@
             const ENERGY_SUGGESTIONS = ['1.0', '5.0', '10.0', '12.0', '12.5', '12.7639'];
             const MAX_HISTORY = 8;
 
-            // --- Helper: Env String neu aufbauen ---
             function updateFinalString() {
                 const bid = (idInput.value || '').trim();
                 const energy = (energyInput.value || '').trim();
@@ -350,15 +262,11 @@
                 envStringOutput.value = `id_energy_env = '${bid}#${energy}#${env}'`;
             }
 
-            // --- Helper: History-Listen ---
             function addToHistory(list, value) {
                 const v = (value || '').trim();
                 if (!v) return list;
-
-                // Wenn Wert bereits vorne steht, nichts tun
                 if (list[0] === v) return list;
 
-                // vorhandenes V entfernen und vorne einfügen
                 const filtered = list.filter(x => x !== v);
                 filtered.unshift(v);
                 if (filtered.length > MAX_HISTORY) filtered.length = MAX_HISTORY;
@@ -378,7 +286,7 @@
                 idHistory.forEach(val => {
                     const btn = document.createElement('button');
                     btn.type = 'button';
-                    btn.className = 'badge badge-gray';
+                    btn.className = 'badge badge--gray';
                     btn.textContent = val;
                     btn.addEventListener('click', () => {
                         idInput.value = val;
@@ -401,7 +309,7 @@
                 energyHistory.forEach(val => {
                     const btn = document.createElement('button');
                     btn.type = 'button';
-                    btn.className = 'badge badge-gray';
+                    btn.className = 'badge badge--gray';
                     btn.textContent = val;
                     btn.addEventListener('click', () => {
                         energyInput.value = val;
@@ -416,7 +324,7 @@
                 ENERGY_SUGGESTIONS.forEach(val => {
                     const btn = document.createElement('button');
                     btn.type = 'button';
-                    btn.className = 'badge badge-gray';
+                    btn.className = 'badge badge--gray';
                     btn.textContent = val;
                     btn.addEventListener('click', () => {
                         energyInput.value = val;
@@ -426,7 +334,6 @@
                 });
             }
 
-            // --- Helper: Zellen-Styles ---
             function resetCellClasses(cell) {
                 cell.classList.remove(
                     'env-cell-empty',
@@ -466,7 +373,6 @@
                 }
             }
 
-            // --- Grid erzeugen ---
             function buildGrid() {
                 envGrid.innerHTML = '';
                 for (let i = 0; i < ENV_LENGTH; i++) {
@@ -477,9 +383,7 @@
 
                     updateCellAppearance(cell, envChars[i], isCenter);
 
-                    // Drag & Drop
                     cell.addEventListener('dragover', (e) => {
-                        // Mittlere Zelle akzeptiert keine Drops
                         if (isCenter) return;
                         e.preventDefault();
                         e.dataTransfer.dropEffect = 'copy';
@@ -503,7 +407,6 @@
                 }
             }
 
-            // --- Palette Drag-Quellen ---
             function initPalette() {
                 const paletteItems = document.querySelectorAll('.palette-item');
                 paletteItems.forEach(item => {
@@ -515,7 +418,6 @@
                 });
             }
 
-            // --- Copy-Funktion ---
             function copyEnvString() {
                 const text = envStringOutput.value || '';
                 if (!text) return;
@@ -557,20 +459,13 @@
                 document.body.removeChild(ta);
             }
 
-            // --- Events Inputs ---
-            idInput.addEventListener('input', () => {
-                updateFinalString();
-            });
-
+            idInput.addEventListener('input', updateFinalString);
             idInput.addEventListener('change', () => {
                 idHistory = addToHistory(idHistory, idInput.value);
                 renderIdHistory();
             });
 
-            energyInput.addEventListener('input', () => {
-                updateFinalString();
-            });
-
+            energyInput.addEventListener('input', updateFinalString);
             energyInput.addEventListener('change', () => {
                 energyHistory = addToHistory(energyHistory, energyInput.value);
                 renderEnergyHistory();
@@ -588,7 +483,7 @@
 
             copyButton.addEventListener('click', copyEnvString);
 
-            // --- Initialisierung ---
+            // Initialisierung
             buildGrid();
             initPalette();
             renderIdHistory();
