@@ -6,6 +6,7 @@ let allLogData = {};              // { filename: [ {round,...}, ... ] }
 let allServerLogs = [];           // zusammengeführt
 let logData = [];                 // aktives Spiel-Log
 let currentRoundIndex = 0;
+let globalMaxRound = 0;
 
 const GRID_SIZE = 7;
 const GRID_CENTER = Math.floor(GRID_SIZE / 2);
@@ -235,39 +236,277 @@ function renderEnvGrid(envString) {
         envGridDisplay.appendChild(cellDiv);
     }
 }
+// function renderInfo(data) {
+//     if (!data) data = {};
+
+//     // --- Rundenanzeige: abs / rel ---
+//     const roundEl = document.getElementById('infoRound');
+//     const absRound = (data.round !== undefined && data.round !== null) ? data.round : null;
+//     const relRound = (data.rel_r !== undefined && data.rel_r !== null) ? data.rel_r : null;
+
+//     if (roundEl) {
+//         if (absRound == null && relRound == null) {
+//             roundEl.textContent = 'N/A';
+//         } else {
+//             let text;
+//             if (absRound != null && relRound != null) {
+//                 // Standardfall: abs / rel
+//                 text = `${absRound} / ${relRound}`;
+//             } else if (absRound != null) {
+//                 // rel_r fehlt -> einfache, konsistente Variante: ?
+//                 text = `${absRound} / ?`;
+//             } else {
+//                 // nur rel_r vorhanden (seltener Fall)
+//                 text = `? / ${relRound}`;
+//             }
+//             roundEl.textContent = text;
+//         }
+//     }
+
+//     // --- Event-Text + Styling (MOVE vs SPLIT) ---
+//     const eventEl = document.getElementById('infoEvent');
+//     const rawEvent = data.event ?? 'N/A';
+//     const normalizedEvent = (data.event || '').toString().toUpperCase();
+
+//     if (eventEl) {
+//         eventEl.textContent = rawEvent;
+//         if (normalizedEvent === 'SPLIT') {
+//             eventEl.classList.add('event-split');
+//         } else {
+//             eventEl.classList.remove('event-split');
+//         }
+//     }
+
+//     const bidEl = document.getElementById('infoBid');
+//     if (bidEl) {
+//         bidEl.textContent = data.bid ?? 'N/A';
+//     }
+
+//     const energEl = document.getElementById('infoEnerg');
+//     if (energEl) {
+//         if (typeof data.energ === 'number') {
+//             energEl.textContent = data.energ.toFixed(2);
+//         } else {
+//             energEl.textContent = data.energ ?? 'N/A';
+//         }
+//     }
+
+//     // --- MOVE / SPLIT Beschriftungen + Werte ---
+//     const infoMoveEl = document.getElementById('infoMove');
+//     const infoTargetEl = document.getElementById('infoTargetAbsCoords');
+
+//     const moveLabelEl = infoMoveEl ? infoMoveEl.previousElementSibling : null;
+//     const targetLabelEl = infoTargetEl ? infoTargetEl.previousElementSibling : null;
+
+//     if (moveLabelEl && targetLabelEl) {
+//         if (normalizedEvent === 'SPLIT') {
+//             moveLabelEl.textContent = 'Neues Biest relativ:';
+//             targetLabelEl.textContent = 'Neues Biest absolut:';
+//         } else {
+//             // Default-Fall: MOVE oder andere Events
+//             moveLabelEl.textContent = 'Nächster Zug (Move):';
+//             targetLabelEl.textContent = 'Ziel Pos (Absolut):';
+//         }
+//     }
+
+//     if (infoMoveEl) {
+//         infoMoveEl.textContent =
+//             (data.move && data.move.length === 2) ? `[${data.move.join(', ')}]` : 'N/A';
+//     }
+
+//     const isAbsPosAvailable = data.abs_x !== undefined && data.abs_y !== undefined;
+//     const currentAbsCoordsEl = document.getElementById('infoCurrentAbsCoords');
+//     if (currentAbsCoordsEl) {
+//         currentAbsCoordsEl.textContent = isAbsPosAvailable
+//             ? `[${data.abs_x}, ${data.abs_y}]`
+//             : 'N/A';
+//     }
+
+//     if (infoTargetEl) {
+//         if (data.move && data.move.length === 2 && isAbsPosAvailable) {
+//             const absX = data.abs_x + data.move[0];
+//             const absY = data.abs_y + data.move[1];
+//             infoTargetEl.textContent = `[${absX}, ${absY}]`;
+//         } else {
+//             infoTargetEl.textContent = 'N/A';
+//         }
+//     }
+
+//     // --- Prioritäten + Listen ---
+//     const prioFood = parseInt(data.priorityfood) || 0;
+//     const prioHunt = parseInt(data.priorityhunt) || 0;
+//     const prioKill = parseInt(data.prioritykill) || 0;
+//     const prioEscape = parseInt(data.priorityescape) || 0;
+
+//     document.getElementById('prioFood').textContent = prioFood;
+//     document.getElementById('prioHunt').textContent = prioHunt;
+//     document.getElementById('prioKill').textContent = prioKill;
+//     document.getElementById('prioEscape').textContent = prioEscape;
+
+//     const nextMove = (data.move && data.move.length === 2) ? data.move : null;
+
+//     document.getElementById('listFoodCoords').innerHTML =
+//         formatCoordsListHTML(data.foodlist, prioFood, nextMove, 'Futter-Liste');
+
+//     document.getElementById('listHuntCoords').innerHTML =
+//         formatCoordsListHTML(data.huntlist, prioHunt, nextMove, 'Jagd-Liste');
+
+//     document.getElementById('listKillCoords').innerHTML =
+//         formatCoordsListHTML(data.killlist, prioKill, nextMove, 'Kill-Liste');
+
+//     document.getElementById('listEscapeCoords').innerHTML =
+//         formatCoordsListHTML(data.escapelist, prioEscape, nextMove, 'Flucht-Liste');
+// }
+
 function renderInfo(data) {
     if (!data) data = {};
 
-    document.getElementById('infoRound').textContent = data.round ?? 'N/A';
-    document.getElementById('infoEvent').textContent = data.event ?? 'N/A';
-    document.getElementById('infoBid').textContent = data.bid ?? 'N/A';
-    document.getElementById('infoEnerg').textContent =
-        (typeof data.energ === 'number') ? data.energ.toFixed(2) : (data.energ ?? 'N/A');
+    // --- Rundenanzeige: abs / rel ---
+    const roundEl = document.getElementById('infoRound');
+    const absRound = (data.round !== undefined && data.round !== null) ? data.round : null;
+    const relRound = (data.rel_r !== undefined && data.rel_r !== null) ? data.rel_r : null;
 
-    document.getElementById('infoMove').textContent =
-        data.move ? `[${data.move.join(', ')}]` : 'N/A';
-
-    const isAbsPosAvailable = data.abs_x !== undefined && data.abs_y !== undefined;
-    const currentAbsCoordsEl = document.getElementById('infoCurrentAbsCoords');
-    currentAbsCoordsEl.textContent = isAbsPosAvailable
-        ? `[${data.abs_x}, ${data.abs_y}]`
-        : 'N/A';
-
-    const targetAbsCoordsEl = document.getElementById('infoTargetAbsCoords');
-    if (data.move && data.move.length === 2 && isAbsPosAvailable) {
-        const absX = data.abs_x + data.move[0];
-        const absY = data.abs_y + data.move[1];
-        targetAbsCoordsEl.textContent = `[${absX}, ${absY}]`;
-    } else {
-        targetAbsCoordsEl.textContent = 'N/A';
+    if (roundEl) {
+        if (absRound == null && relRound == null) {
+            roundEl.textContent = 'N/A';
+        } else {
+            let text;
+            if (absRound != null && relRound != null) {
+                // Standardfall: abs / rel
+                text = `${absRound} / ${relRound}`;
+            } else if (absRound != null) {
+                // rel_r fehlt -> einfache Variante mit ?
+                text = `${absRound} / ?`;
+            } else {
+                // nur rel_r vorhanden (selten)
+                text = `? / ${relRound}`;
+            }
+            roundEl.textContent = text;
+        }
     }
 
+    // --- Event-Text + Styling (MOVE vs SPLIT) ---
+    const eventEl = document.getElementById('infoEvent');
+    const eventSl = document.getElementById('stats-panel')
+    const rawEvent = data.event ?? 'N/A';
+    const normalizedEvent = (data.event || '').toString().toUpperCase();
+
+    if (eventEl) {
+        eventEl.textContent = rawEvent;
+        if (normalizedEvent === 'SPLIT') {
+            eventEl.classList.add('event-split');
+            eventSl.classList.add('event-split')
+
+        } else {
+            eventEl.classList.remove('event-split');
+            eventSl.classList.remove('event-split')
+        }
+    }
+
+    const bidEl = document.getElementById('infoBid');
+    if (bidEl) {
+        bidEl.textContent = data.bid ?? 'N/A';
+    }
+
+    const energEl = document.getElementById('infoEnerg');
+    if (energEl) {
+        if (typeof data.energ === 'number') {
+            energEl.textContent = data.energ.toFixed(2);
+        } else {
+            energEl.textContent = data.energ ?? 'N/A';
+        }
+    }
+
+    // --- MOVE / SPLIT Labels (nur Texte der Labels) ---
+    const infoMoveEl = document.getElementById('infoMove');
+    const infoTargetEl = document.getElementById('infoTargetAbsCoords');
+
+    const moveLabelEl = infoMoveEl ? infoMoveEl.previousElementSibling : null;
+    const targetLabelEl = infoTargetEl ? infoTargetEl.previousElementSibling : null;
+
+    if (moveLabelEl && targetLabelEl) {
+        if (normalizedEvent === 'SPLIT') {
+            moveLabelEl.textContent = 'Neues Biest relativ:';
+            targetLabelEl.textContent = 'Neues Biest absolut:';
+        } else {
+            // Default-Fall: MOVE oder andere Events
+            moveLabelEl.textContent = 'Nächster Zug (Move):';
+            targetLabelEl.textContent = 'Ziel Pos (Absolut):';
+        }
+    }
+
+    // Move-Wert (egal ob MOVE oder SPLIT)
+    if (infoMoveEl) {
+        infoMoveEl.textContent =
+            (data.move && data.move.length === 2) ? `[${data.move.join(', ')}]` : 'N/A';
+    }
+
+    // --- Abs-Koordinaten-Logik ---
+    // Bei MOVE: Logs speichern die ZIEL-Position -> aktuelle = ziel - move
+    // Bei SPLIT (und anderen): abs_x/abs_y = aktuelle Pos -> Ziel = aktuelle + move
+    const currentAbsCoordsEl = document.getElementById('infoCurrentAbsCoords');
+
+    const hasAbs =
+        data.abs_x !== undefined && data.abs_x !== null &&
+        data.abs_y !== undefined && data.abs_y !== null;
+
+    const hasMove =
+        Array.isArray(data.move) &&
+        data.move.length === 2 &&
+        typeof data.move[0] === 'number' &&
+        typeof data.move[1] === 'number';
+
+    let currentText = 'N/A';
+    let targetText = 'N/A';
+
+    if (hasAbs) {
+        const absX = data.abs_x;
+        const absY = data.abs_y;
+
+        if (normalizedEvent === 'MOVE') {
+            // MOVE: abs_x/abs_y = Ziel; aktuelle Pos rückwärts rechnen
+            if (hasMove) {
+                const currentX = absX - data.move[0];
+                const currentY = absY - data.move[1];
+                currentText = `[${currentX}, ${currentY}]`;
+            } else {
+                // Kein Move vorhanden -> wir wissen nur das Ziel
+                currentText = `[${absX}, ${absY}]`;
+            }
+            targetText = `[${absX}, ${absY}]`;
+        } else {
+            // SPLIT (und andere Events):
+            // abs_x/abs_y = aktuelle Pos; Ziel = aktuelle + move (falls vorhanden)
+            const currentX = absX;
+            const currentY = absY;
+            currentText = `[${currentX}, ${currentY}]`;
+
+            if (hasMove) {
+                const targetX = currentX + data.move[0];
+                const targetY = currentY + data.move[1];
+                targetText = `[${targetX}, ${targetY}]`;
+            } else {
+                targetText = 'N/A';
+            }
+        }
+    }
+
+    if (currentAbsCoordsEl) {
+        currentAbsCoordsEl.textContent = currentText;
+    }
+    if (infoTargetEl) {
+        infoTargetEl.textContent = targetText;
+    }
+
+    // --- Prioritäten + Listen ---
     const prioFood = parseInt(data.priorityfood) || 0;
     const prioHunt = parseInt(data.priorityhunt) || 0;
+    const prioKill = parseInt(data.prioritykill) || 0;
     const prioEscape = parseInt(data.priorityescape) || 0;
 
     document.getElementById('prioFood').textContent = prioFood;
     document.getElementById('prioHunt').textContent = prioHunt;
+    document.getElementById('prioKill').textContent = prioKill;
     document.getElementById('prioEscape').textContent = prioEscape;
 
     const nextMove = (data.move && data.move.length === 2) ? data.move : null;
@@ -278,9 +517,15 @@ function renderInfo(data) {
     document.getElementById('listHuntCoords').innerHTML =
         formatCoordsListHTML(data.huntlist, prioHunt, nextMove, 'Jagd-Liste');
 
+    document.getElementById('listKillCoords').innerHTML =
+        formatCoordsListHTML(data.killlist, prioKill, nextMove, 'Kill-Liste');
+
     document.getElementById('listEscapeCoords').innerHTML =
         formatCoordsListHTML(data.escapelist, prioEscape, nextMove, 'Flucht-Liste');
 }
+
+
+
 
 /* --- Playback --- */
 function togglePlayback(shouldPlay = !isPlaying) {
@@ -373,7 +618,8 @@ function buildOverlayForContainer(container, listName, list, basePriority) {
     let pointColor = '';
     if (listName === 'foodlist') pointColor = 'bg-food-orange';
     else if (listName === 'huntlist') pointColor = 'bg-enemy-red';
-    else if (listName === 'escapelist') pointColor = 'bg-move-pink';
+    else if (listName === 'killlist') pointColor = 'bg-enemy-red';
+    else if (listName === 'escapelist') pointColor = 'bg-pink';
 
     list.forEach((coords, i) => {
         if (!coords || coords.length !== 2) return;
@@ -434,10 +680,9 @@ function updateModalContent(data) {
 
     drawNextMoveRing(gridContainerModal, data);
 
-    const maxRound =
-        (logData && logData.length > 0) ? logData[logData.length - 1].round : 0;
-
+    const maxRound = getMaxRoundForDisplay();
     modalRoundIndicator.textContent = `Runde ${data.round} / ${maxRound}`;
+
 }
 
 function openModal() {
@@ -534,11 +779,12 @@ function goToRound(index) {
         const currentData = logData[currentRoundIndex];
         if (!currentData) return;
 
-        const maxRound = logData[logData.length - 1].round;
+        const maxRound = getMaxRoundForDisplay();
 
         roundIndicator.textContent = `Runde ${currentData.round} / ${maxRound}`;
         if (modalRoundIndicator)
             modalRoundIndicator.textContent = `Runde ${currentData.round} / ${maxRound}`;
+
 
         timelineSlider.value = index;
 
@@ -570,7 +816,9 @@ function resetUIForNoData() {
     prevRoundButton.disabled = true;
     nextRoundButton.disabled = true;
 
-    roundIndicator.textContent = "Runde 0 / 0";
+    const maxRound = getMaxRoundForDisplay();
+    roundIndicator.textContent = `Runde 0 / ${maxRound}`;
+
 
     renderEmptyGrid();
     renderInfo(null);
@@ -583,6 +831,124 @@ function resetUIForNoData() {
 }
 
 /* --- Parser --- */
+
+/**
+ * Mappt neue Felder (abs_r, rel_r, cmd, e, fl/pf/hl/ph/kl/pk/el/pe)
+ * auf die in der GUI verwendeten Namen:
+ * round, event, energ, foodlist, huntlist, killlist, escapelist,
+ * priorityfood, priorityhunt, prioritykill, priorityescape.
+ *
+ * Alte Logs bleiben unverändert funktionsfähig.
+ */
+function normalizeLogObject(obj) {
+    if (!obj || typeof obj !== 'object') return obj;
+
+    // Kopie, damit wir das Original nicht hart überschreiben
+    const normalized = { ...obj };
+
+    // --- Runden ---
+    // Neue Struktur: abs_r = absolute Runde, rel_r = relative Runde
+    if (normalized.round == null && typeof obj.abs_r !== 'undefined') {
+        normalized.round = obj.abs_r;
+    }
+
+    // Server-Logs neue Struktur: r = Runde
+    if (normalized.round == null && typeof obj.r !== 'undefined') {
+        normalized.round = obj.r;
+    }
+
+    // rel_r schon mal mitnehmen (für spätere Visualisierung)
+    if (typeof obj.rel_r !== 'undefined' && normalized.rel_r == null) {
+        normalized.rel_r = obj.rel_r;
+    }
+
+    // --- Erkennen, ob es ein Spiel-Log / Biest-Eintrag ist ---
+    const looksLikeGameEntry =
+        ('env' in obj) ||
+        ('move' in obj) ||
+        ('bid' in obj) ||
+        ('cmd' in obj) ||
+        ('event' in obj) ||
+        ('fl' in obj) || ('foodlist' in obj) ||
+        ('hl' in obj) || ('huntlist' in obj) ||
+        ('kl' in obj) || ('killlist' in obj) ||
+        ('el' in obj) || ('escapelist' in obj);
+
+    if (looksLikeGameEntry) {
+        // Event / Command
+        if (normalized.event == null && typeof obj.cmd !== 'undefined') {
+            normalized.event = obj.cmd;
+        }
+
+        // Energie
+        if (typeof normalized.energ === 'undefined' && typeof obj.e === 'number') {
+            normalized.energ = obj.e;
+        }
+
+        // Bewegungen übernehmen, falls nötig
+        if (typeof normalized.move === 'undefined' && Array.isArray(obj.move)) {
+            normalized.move = obj.move;
+        }
+
+        // Listen: fl/hl/kl/el -> foodlist/huntlist/killlist/escapelist
+        if (!Array.isArray(normalized.foodlist) && Array.isArray(obj.fl)) {
+            normalized.foodlist = obj.fl;
+        }
+        if (!Array.isArray(normalized.huntlist) && Array.isArray(obj.hl)) {
+            normalized.huntlist = obj.hl;
+        }
+        if (!Array.isArray(normalized.killlist) && Array.isArray(obj.kl)) {
+            normalized.killlist = obj.kl;
+        }
+        if (!Array.isArray(normalized.escapelist) && Array.isArray(obj.el)) {
+            normalized.escapelist = obj.el;
+        }
+
+        // Prioritäten: pf/ph/pk/pe -> priority*
+        if (typeof normalized.priorityfood === 'undefined' && typeof obj.pf !== 'undefined') {
+            normalized.priorityfood = obj.pf;
+        }
+        if (typeof normalized.priorityhunt === 'undefined' && typeof obj.ph !== 'undefined') {
+            normalized.priorityhunt = obj.ph;
+        }
+        if (typeof normalized.prioritykill === 'undefined' && typeof obj.pk !== 'undefined') {
+            normalized.prioritykill = obj.pk;
+        }
+        if (typeof normalized.priorityescape === 'undefined' && typeof obj.pe !== 'undefined') {
+            normalized.priorityescape = obj.pe;
+        }
+    }
+
+    // --- Server-Logs ---
+    // Server-Logs können in alter Form (servermsg/exception) oder neuer Form (smsg/ex) kommen.
+    // Wir mappen alles auf die "alten" Felder, damit die restliche UI unverändert weiterarbeiten kann.
+    const looksLikeServerLog =
+        ('servermsg' in obj) || ('exception' in obj) ||
+        ('smsg' in obj) || ('ex' in obj);
+
+    if (looksLikeServerLog) {
+        // Runde aus abs_r oder r ziehen, falls noch nicht gesetzt
+        if (normalized.round == null) {
+            if (typeof obj.abs_r !== 'undefined') {
+                normalized.round = obj.abs_r;
+            } else if (typeof obj.r !== 'undefined') {
+                normalized.round = obj.r;
+            }
+        }
+
+        // Kurzformen auf alte Namen mappen
+        if (typeof normalized.servermsg === 'undefined' && typeof obj.smsg !== 'undefined') {
+            normalized.servermsg = obj.smsg;
+        }
+        if (typeof normalized.exception === 'undefined' && typeof obj.ex !== 'undefined') {
+            normalized.exception = obj.ex;
+        }
+    }
+
+    return normalized;
+
+}
+
 function parseNDJSONContentToArray(text) {
     const lines = text
         .split(/\r?\n/)
@@ -594,9 +960,9 @@ function parseNDJSONContentToArray(text) {
     for (const line of lines) {
         try {
             const obj = JSON.parse(line);
-            arr.push(obj);
+            arr.push(normalizeLogObject(obj));
         } catch (e) {
-            /* ignore invalid lines */
+            // Ungültige Zeilen ignorieren
         }
     }
     return arr;
@@ -699,9 +1065,11 @@ function renderEmptyGrid() {
         move: null,
         foodlist: [],
         huntlist: [],
+        killlist: [],
         escapelist: [],
         priorityfood: 0,
         priorityhunt: 0,
+        prioritykill: 0,
         priorityescape: 0
     };
 
@@ -709,6 +1077,162 @@ function renderEmptyGrid() {
     ensureMoveAreaDiv();
     placeMoveArea();
 }
+
+// Hilft funktion für die Biestlos:
+function recalculateGlobalMaxRound() {
+    let maxRound = 0;
+
+    const fileNames = Object.keys(allLogData || {});
+    fileNames.forEach(name => {
+        const arr = allLogData[name] || [];
+        arr.forEach(row => {
+            const r = parseInt(row.round);
+            if (!Number.isNaN(r) && r > maxRound) {
+                maxRound = r;
+            }
+        });
+    });
+
+    globalMaxRound = maxRound;
+}
+
+// Fallback-Helfer, falls noch nichts geladen ist
+function getMaxRoundForDisplay() {
+    if (globalMaxRound && globalMaxRound > 0) {
+        return globalMaxRound;
+    }
+    if (logData && logData.length > 0) {
+        const last = logData[logData.length - 1];
+        const r = parseInt(last.round);
+        return Number.isNaN(r) ? 0 : r;
+    }
+    return 0;
+}
+
+
+/* Spiel-Logs (Biest-Logs) aus einer FileList laden */
+async function handleGameLogFiles(files) {
+    if (!files || files.length === 0) {
+        if (fileCount) fileCount.textContent = 'Keine Datei(en)';
+        return;
+    }
+
+    togglePlayback(false);
+    allLogData = {};
+    if (fileCount) fileCount.textContent = `Lade ${files.length} Datei(en)...`;
+
+    const fileReadPromises = [];
+
+    for (const file of files) {
+        fileReadPromises.push(
+            readFileAsText(file).then(content => {
+                try {
+                    let parsed = parseNDJSONContentToArray(content);
+
+                    // Falls erste Runde > 0 oder nicht gesetzt: künstliche Runde 0 einfügen
+                    if (parsed.length > 0) {
+                        const firstRound = parseInt(parsed[0].round);
+                        if (isNaN(firstRound) || firstRound > 0) {
+                            parsed.unshift({
+                                round: 0,
+                                env: '.'.repeat(49),
+                                event: 'Server-Start',
+                                bid: '',
+                                energ: 0,
+                                move: null,
+                                foodlist: [],
+                                huntlist: [],
+                                killlist: [],
+                                escapelist: [],
+                                priorityfood: 0,
+                                priorityhunt: 0,
+                                prioritykill: 0,
+                                priorityescape: 0
+                            });
+                        }
+                    }
+
+                    allLogData[file.name] = parsed;
+                } catch (err) {
+                    console.error(`Fehler beim Parsen von ${file.name}:`, err);
+                }
+            })
+        );
+    }
+
+    await Promise.all(fileReadPromises);
+
+    // NEU: globales Maximum der Runden über alle Dateien berechnen
+    recalculateGlobalMaxRound();
+
+    const loadedFileNames = Object.keys(allLogData);
+    if (loadedFileNames.length > 0) {
+        if (fileCount) {
+            fileCount.textContent = `${loadedFileNames.length} Datei(en) geladen`;
+        }
+
+        updateFileSelector();
+        selectActiveFile(loadedFileNames[0]);
+
+        // World-Beast-IDs aktualisieren (inkl. fester Palette)
+        updateBeastIdListWorld();
+
+        // World-Logs initial sichtbar machen
+        renderServerLogsForRoundWorld(logData && logData[0] ? logData[0].round : null);
+        renderWorldVisualization();
+    } else {
+        if (fileCount) fileCount.textContent = 'Keine gültigen Logs';
+        resetUIForNoData();
+        updateFileSelector();
+        updateBeastIdListWorld();
+    }
+}
+
+/* Server-Logs aus einer FileList laden */
+async function handleServerLogFiles(files) {
+    if (!files || files.length === 0) {
+        if (serverLogFileCount) serverLogFileCount.textContent = 'Keine Logs';
+        return;
+    }
+
+    allServerLogs = [];
+    if (serverLogFileCount) {
+        serverLogFileCount.textContent = `Lade ${files.length} Log(s)...`;
+    }
+
+    const fileReadPromises = [];
+
+    for (const file of files) {
+        fileReadPromises.push(
+            readFileAsText(file).then(content => {
+                try {
+                    const parsed = parseNDJSONContentToArray(content);
+                    allServerLogs.push(...parsed);
+                } catch (err) {
+                    console.error(`Fehler beim Parsen von ${file.name} (Server-Log):`, err);
+                }
+            })
+        );
+    }
+
+    await Promise.all(fileReadPromises);
+
+    if (serverLogFileCount) {
+        serverLogFileCount.textContent = `${files.length} Log(s) geladen`;
+    }
+    if (serverLogStatus) {
+        serverLogStatus.textContent = `geladen (${allServerLogs.length} Einträge)`;
+    }
+
+    if (logData && logData.length > 0 && logData[currentRoundIndex]) {
+        renderServerLogsForRound(logData[currentRoundIndex].round);
+        renderServerLogsForRoundWorld(logData[currentRoundIndex].round);
+    } else {
+        renderServerLogsForRound(null);
+        renderServerLogsForRoundWorld(null);
+    }
+}
+
 
 /* --- Datei-Verwaltung: Loader --- */
 function readFileAsText(file) {
@@ -755,14 +1279,14 @@ function selectActiveFile(fileName) {
         playPauseButton.disabled = false;
         zoomButton.disabled = false;
 
-        const maxRound = logData[logData.length - 1].round;
-        roundIndicator.textContent =
-            `Runde ${logData[0].round} / ${maxRound}`;
+        const maxRound = getMaxRoundForDisplay();
+        roundIndicator.textContent = `Runde 0 / ${maxRound}`;
 
         goToRound(0);
     } else {
         resetUIForNoData();
     }
+
 }
 /* --- World Dashboard – Beast IDs & Grid & Logs (ERWEITERT NUR HIER) --- */
 function updateBeastIdListWorld() {
@@ -1254,15 +1778,23 @@ function localCharToColor(ch, isCenter = false) {
     if (ch === '>' || ch === '=') return '#EF4444';
     return null;
 }
+// function clampWorldX(x) {
+//     const range = (WORLD_X_MAX - WORLD_X_MIN + 1); // 71
+//     let v = x;
+//     // auf Bereich [-35..35] abbilden (toroidisch)
+//     v = ((v - WORLD_X_MIN) % range + range) % range + WORLD_X_MIN;
+//     return v;
+// }
 
-/* NEU: Vertikales Wrap statt Clamping */
-function clampWorldY(y) {
-    const range = (WORLD_Y_MAX_CELL - WORLD_Y_MIN_CELL + 1); // 34
-    let v = y;
-    // auf Bereich [-17..16] abbilden (toroidisch)
-    v = ((v - WORLD_Y_MIN_CELL) % range + range) % range + WORLD_Y_MIN_CELL;
-    return v;
-}
+
+// /* NEU: Vertikales Wrap statt Clamping */
+// function clampWorldY(y) {
+//     const range = (WORLD_Y_MAX_CELL - WORLD_Y_MIN_CELL + 1); // 34
+//     let v = y;
+//     // auf Bereich [-17..16] abbilden (toroidisch)
+//     v = ((v - WORLD_Y_MIN_CELL) % range + range) % range + WORLD_Y_MIN_CELL;
+//     return v;
+// }
 
 /* --- Sicht, Trails, Dots, Pfeile usw. --- */
 function renderWorldVisualization() {
@@ -1672,6 +2204,36 @@ function fitWorldGridToWrapper() {
 let playbackInterval = null;
 let isPlaying = false;
 
+/* Drag & Drop für Upload-Buttons */
+function setupDropZone(element, onFiles) {
+    if (!element || typeof onFiles !== 'function') return;
+
+    const preventDefaults = (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+    };
+
+    ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(evtName => {
+        element.addEventListener(evtName, preventDefaults);
+    });
+
+    element.addEventListener('dragover', () => {
+        element.classList.add('drag-over');
+    });
+
+    element.addEventListener('dragleave', () => {
+        element.classList.remove('drag-over');
+    });
+
+    element.addEventListener('drop', (e) => {
+        element.classList.remove('drag-over');
+        const dt = e.dataTransfer;
+        if (!dt || !dt.files || dt.files.length === 0) return;
+        onFiles(dt.files);
+    });
+}
+
+
 function initAppDom() {
     // Standard-DOM
     fileInput = document.getElementById('fileInput');
@@ -1777,118 +2339,26 @@ function initAppDom() {
         selectActiveFile(e.target.value);
     });
 
-    /* Spiel-Log Upload */
-    fileInput.addEventListener('change', async e => {
+    /* Spiel-Log Upload (über Dateidialog) */
+    fileInput.addEventListener('change', e => {
         const files = e.target.files;
-        if (!files || files.length === 0) {
-            fileCount.textContent = 'Keine Datei(en)';
-            return;
-        }
-
-        togglePlayback(false);
-        allLogData = {};
-        fileCount.textContent = `Lade ${files.length} Datei(en)...`;
-
-        const fileReadPromises = [];
-
-        for (const file of files) {
-            fileReadPromises.push(
-                readFileAsText(file).then(content => {
-                    try {
-                        let parsed = parseNDJSONContentToArray(content);
-
-                        if (parsed.length > 0) {
-                            const firstRound = parseInt(parsed[0].round);
-                            if (isNaN(firstRound) || firstRound > 0) {
-                                parsed.unshift({
-                                    round: 0,
-                                    env: '.'.repeat(49),
-                                    event: 'Server-Start',
-                                    bid: '',
-                                    energ: 0,
-                                    move: null,
-                                    foodlist: [],
-                                    huntlist: [],
-                                    escapelist: [],
-                                    priorityfood: 0,
-                                    priorityhunt: 0,
-                                    priorityescape: 0
-                                });
-                            }
-                        }
-
-                        allLogData[file.name] = parsed;
-                    } catch (err) {
-                        console.error(`Fehler beim Parsen von ${file.name}:`, err);
-                    }
-                })
-            );
-        }
-
-        await Promise.all(fileReadPromises);
-
-        const loadedFileNames = Object.keys(allLogData);
-        if (loadedFileNames.length > 0) {
-            fileCount.textContent = `${loadedFileNames.length} Datei(en) geladen`;
-
-            updateFileSelector();
-            selectActiveFile(loadedFileNames[0]);
-
-            // World-Beast-IDs aktualisieren (inkl. feste Palette)
-            updateBeastIdListWorld();
-
-            // World-Logs initial sichtbar machen
-            renderServerLogsForRoundWorld(logData && logData[0] ? logData[0].round : null);
-            renderWorldVisualization();
-        } else {
-            fileCount.textContent = 'Keine gültigen Logs';
-            resetUIForNoData();
-            updateFileSelector();
-            updateBeastIdListWorld();
-        }
+        handleGameLogFiles(files);
     });
 
-    /* Server-Log Upload */
-    serverLogInput.addEventListener('change', async e => {
+    /* Server-Log Upload (über Dateidialog) */
+    serverLogInput.addEventListener('change', e => {
         const files = e.target.files;
-        if (!files || files.length === 0) {
-            serverLogFileCount.textContent = 'Keine Logs';
-            return;
-        }
-
-        allServerLogs = [];
-        serverLogFileCount.textContent = `Lade ${files.length} Log(s)...`;
-
-        const fileReadPromises = [];
-
-        for (const file of files) {
-            fileReadPromises.push(
-                readFileAsText(file).then(content => {
-                    try {
-                        const parsed = parseNDJSONContentToArray(content);
-                        allServerLogs.push(...parsed);
-                    } catch (err) {
-                        console.error(`Fehler beim Parsen von ${file.name} (Server-Log):`, err);
-                    }
-                })
-            );
-        }
-
-        await Promise.all(fileReadPromises);
-
-        serverLogFileCount.textContent =
-            `${files.length} Log(s) geladen`;
-        serverLogStatus.textContent =
-            `geladen (${allServerLogs.length} Einträge)`;
-
-        if (logData && logData.length > 0 && logData[currentRoundIndex]) {
-            renderServerLogsForRound(logData[currentRoundIndex].round);
-            renderServerLogsForRoundWorld(logData[currentRoundIndex].round);
-        } else {
-            renderServerLogsForRound(null);
-            renderServerLogsForRoundWorld(null);
-        }
+        handleServerLogFiles(files);
     });
+
+    /* Drag & Drop auf die Upload-Buttons */
+    const gameLogButton = document.querySelector('label[for="fileInput"]');
+    const serverLogButton = document.querySelector('label[for="serverLogInput"]');
+
+    setupDropZone(gameLogButton, handleGameLogFiles);
+    setupDropZone(serverLogButton, handleServerLogFiles);
+
+
 
     /* Rundennavigation & Playback */
     prevRoundButton.addEventListener('click', () => {
@@ -1997,13 +2467,16 @@ function initAppDom() {
 
             case 'f':
             case 'h':
+            case 'k':
             case 'e':
+
                 // f/h/e nur im Biester-Dashboard für die Listen
                 if (currentDashboard !== 'beasterDashboard') break;
 
                 e.preventDefault();
                 if (key === 'f') triggerListButton('foodlist');
                 if (key === 'h') triggerListButton('huntlist');
+                if (key === 'k') triggerListButton('killlist');
                 if (key === 'e') triggerListButton('escapelist');
                 break;
         }
