@@ -190,7 +190,7 @@ function drawNextMoveRing(container, data) {
     if (!mv) return;
 
     const [x, y] = mv;
-    if (x < -GRID_CENTER || x > GRID_CENTER || y < -GRID_CENTER || y > GRID_CENTER)
+    if (x < -GRID_CENTER || x > GRID_SIZE || y < -GRID_CENTER || y > GRID_CENTER)
         return;
 
     const { left, top } = coordsToPercent(x, y);
@@ -236,127 +236,6 @@ function renderEnvGrid(envString) {
         envGridDisplay.appendChild(cellDiv);
     }
 }
-// function renderInfo(data) {
-//     if (!data) data = {};
-
-//     // --- Rundenanzeige: abs / rel ---
-//     const roundEl = document.getElementById('infoRound');
-//     const absRound = (data.round !== undefined && data.round !== null) ? data.round : null;
-//     const relRound = (data.rel_r !== undefined && data.rel_r !== null) ? data.rel_r : null;
-
-//     if (roundEl) {
-//         if (absRound == null && relRound == null) {
-//             roundEl.textContent = 'N/A';
-//         } else {
-//             let text;
-//             if (absRound != null && relRound != null) {
-//                 // Standardfall: abs / rel
-//                 text = `${absRound} / ${relRound}`;
-//             } else if (absRound != null) {
-//                 // rel_r fehlt -> einfache, konsistente Variante: ?
-//                 text = `${absRound} / ?`;
-//             } else {
-//                 // nur rel_r vorhanden (seltener Fall)
-//                 text = `? / ${relRound}`;
-//             }
-//             roundEl.textContent = text;
-//         }
-//     }
-
-//     // --- Event-Text + Styling (MOVE vs SPLIT) ---
-//     const eventEl = document.getElementById('infoEvent');
-//     const rawEvent = data.event ?? 'N/A';
-//     const normalizedEvent = (data.event || '').toString().toUpperCase();
-
-//     if (eventEl) {
-//         eventEl.textContent = rawEvent;
-//         if (normalizedEvent === 'SPLIT') {
-//             eventEl.classList.add('event-split');
-//         } else {
-//             eventEl.classList.remove('event-split');
-//         }
-//     }
-
-//     const bidEl = document.getElementById('infoBid');
-//     if (bidEl) {
-//         bidEl.textContent = data.bid ?? 'N/A';
-//     }
-
-//     const energEl = document.getElementById('infoEnerg');
-//     if (energEl) {
-//         if (typeof data.energ === 'number') {
-//             energEl.textContent = data.energ.toFixed(2);
-//         } else {
-//             energEl.textContent = data.energ ?? 'N/A';
-//         }
-//     }
-
-//     // --- MOVE / SPLIT Beschriftungen + Werte ---
-//     const infoMoveEl = document.getElementById('infoMove');
-//     const infoTargetEl = document.getElementById('infoTargetAbsCoords');
-
-//     const moveLabelEl = infoMoveEl ? infoMoveEl.previousElementSibling : null;
-//     const targetLabelEl = infoTargetEl ? infoTargetEl.previousElementSibling : null;
-
-//     if (moveLabelEl && targetLabelEl) {
-//         if (normalizedEvent === 'SPLIT') {
-//             moveLabelEl.textContent = 'Neues Biest relativ:';
-//             targetLabelEl.textContent = 'Neues Biest absolut:';
-//         } else {
-//             // Default-Fall: MOVE oder andere Events
-//             moveLabelEl.textContent = 'Nächster Zug (Move):';
-//             targetLabelEl.textContent = 'Ziel Pos (Absolut):';
-//         }
-//     }
-
-//     if (infoMoveEl) {
-//         infoMoveEl.textContent =
-//             (data.move && data.move.length === 2) ? `[${data.move.join(', ')}]` : 'N/A';
-//     }
-
-//     const isAbsPosAvailable = data.abs_x !== undefined && data.abs_y !== undefined;
-//     const currentAbsCoordsEl = document.getElementById('infoCurrentAbsCoords');
-//     if (currentAbsCoordsEl) {
-//         currentAbsCoordsEl.textContent = isAbsPosAvailable
-//             ? `[${data.abs_x}, ${data.abs_y}]`
-//             : 'N/A';
-//     }
-
-//     if (infoTargetEl) {
-//         if (data.move && data.move.length === 2 && isAbsPosAvailable) {
-//             const absX = data.abs_x + data.move[0];
-//             const absY = data.abs_y + data.move[1];
-//             infoTargetEl.textContent = `[${absX}, ${absY}]`;
-//         } else {
-//             infoTargetEl.textContent = 'N/A';
-//         }
-//     }
-
-//     // --- Prioritäten + Listen ---
-//     const prioFood = parseInt(data.priorityfood) || 0;
-//     const prioHunt = parseInt(data.priorityhunt) || 0;
-//     const prioKill = parseInt(data.prioritykill) || 0;
-//     const prioEscape = parseInt(data.priorityescape) || 0;
-
-//     document.getElementById('prioFood').textContent = prioFood;
-//     document.getElementById('prioHunt').textContent = prioHunt;
-//     document.getElementById('prioKill').textContent = prioKill;
-//     document.getElementById('prioEscape').textContent = prioEscape;
-
-//     const nextMove = (data.move && data.move.length === 2) ? data.move : null;
-
-//     document.getElementById('listFoodCoords').innerHTML =
-//         formatCoordsListHTML(data.foodlist, prioFood, nextMove, 'Futter-Liste');
-
-//     document.getElementById('listHuntCoords').innerHTML =
-//         formatCoordsListHTML(data.huntlist, prioHunt, nextMove, 'Jagd-Liste');
-
-//     document.getElementById('listKillCoords').innerHTML =
-//         formatCoordsListHTML(data.killlist, prioKill, nextMove, 'Kill-Liste');
-
-//     document.getElementById('listEscapeCoords').innerHTML =
-//         formatCoordsListHTML(data.escapelist, prioEscape, nextMove, 'Flucht-Liste');
-// }
 
 function renderInfo(data) {
     if (!data) data = {};
@@ -387,7 +266,7 @@ function renderInfo(data) {
 
     // --- Event-Text + Styling (MOVE vs SPLIT) ---
     const eventEl = document.getElementById('infoEvent');
-    const eventSl = document.getElementById('stats-panel')
+    const eventSl = document.getElementById('stats-panel');
     const rawEvent = data.event ?? 'N/A';
     const normalizedEvent = (data.event || '').toString().toUpperCase();
 
@@ -395,11 +274,10 @@ function renderInfo(data) {
         eventEl.textContent = rawEvent;
         if (normalizedEvent === 'SPLIT') {
             eventEl.classList.add('event-split');
-            eventSl.classList.add('event-split')
-
+            if (eventSl) eventSl.classList.add('event-split');
         } else {
             eventEl.classList.remove('event-split');
-            eventSl.classList.remove('event-split')
+            if (eventSl) eventSl.classList.remove('event-split');
         }
     }
 
@@ -524,10 +402,10 @@ function renderInfo(data) {
         formatCoordsListHTML(data.escapelist, prioEscape, nextMove, 'Flucht-Liste');
 }
 
-
-
-
 /* --- Playback --- */
+let playbackInterval = null;
+let isPlaying = false;
+
 function togglePlayback(shouldPlay = !isPlaying) {
     isPlaying = shouldPlay;
 
@@ -682,7 +560,6 @@ function updateModalContent(data) {
 
     const maxRound = getMaxRoundForDisplay();
     modalRoundIndicator.textContent = `Runde ${data.round} / ${maxRound}`;
-
 }
 
 function openModal() {
@@ -746,6 +623,7 @@ function closeListModal(event) {
     if (!event || event.target === listModal)
         listModal.style.display = 'none';
 }
+
 /* --- Dashboard-Navigation (unverändert) --- */
 function switchDashboard(dashboardId) {
     if (dashboardId === currentDashboard) return;
@@ -785,7 +663,6 @@ function goToRound(index) {
         if (modalRoundIndicator)
             modalRoundIndicator.textContent = `Runde ${currentData.round} / ${maxRound}`;
 
-
         timelineSlider.value = index;
 
         renderGrid(currentData);
@@ -818,7 +695,6 @@ function resetUIForNoData() {
 
     const maxRound = getMaxRoundForDisplay();
     roundIndicator.textContent = `Runde 0 / ${maxRound}`;
-
 
     renderEmptyGrid();
     renderInfo(null);
@@ -946,7 +822,6 @@ function normalizeLogObject(obj) {
     }
 
     return normalized;
-
 }
 
 function parseNDJSONContentToArray(text) {
@@ -1078,7 +953,7 @@ function renderEmptyGrid() {
     placeMoveArea();
 }
 
-// Hilft funktion für die Biestlos:
+// Hilfsfunktion für die Biest-Logs:
 function recalculateGlobalMaxRound() {
     let maxRound = 0;
 
@@ -1108,7 +983,6 @@ function getMaxRoundForDisplay() {
     }
     return 0;
 }
-
 
 /* Spiel-Logs (Biest-Logs) aus einer FileList laden */
 async function handleGameLogFiles(files) {
@@ -1233,7 +1107,6 @@ async function handleServerLogFiles(files) {
     }
 }
 
-
 /* --- Datei-Verwaltung: Loader --- */
 function readFileAsText(file) {
     return new Promise((resolve, reject) => {
@@ -1286,8 +1159,8 @@ function selectActiveFile(fileName) {
     } else {
         resetUIForNoData();
     }
-
 }
+
 /* --- World Dashboard – Beast IDs & Grid & Logs (ERWEITERT NUR HIER) --- */
 function updateBeastIdListWorld() {
     if (!worldBeastList) return;
@@ -1634,6 +1507,7 @@ function buildWorldAxes() {
         axis.appendChild(right);
     }
 }
+
 function getSelectedBeastIds() {
     if (!worldBeastList) return [];
     return Array.from(worldBeastList.querySelectorAll('.world-bid-checkbox'))
@@ -1778,6 +1652,8 @@ function localCharToColor(ch, isCenter = false) {
     if (ch === '>' || ch === '=') return '#EF4444';
     return null;
 }
+
+/* BACKUP: Wrap-Funktionen (aktuell nicht mehr in der World-Visualisierung verwendet) */
 function clampWorldX(x) {
     const range = (WORLD_X_MAX - WORLD_X_MIN + 1); // 71
     let v = x;
@@ -1786,14 +1662,96 @@ function clampWorldX(x) {
     return v;
 }
 
-
-/* NEU: Vertikales Wrap statt Clamping */
+/* NEU: Vertikales Wrap statt Clamping (nur noch als Backup behalten) */
 function clampWorldY(y) {
     const range = (WORLD_Y_MAX_CELL - WORLD_Y_MIN_CELL + 1); // 34
     let v = y;
     // auf Bereich [-17..16] abbilden (toroidisch)
     v = ((v - WORLD_Y_MIN_CELL) % range + range) % range + WORLD_Y_MIN_CELL;
     return v;
+}
+
+/* --- World-Helfer für aktuelle/Ziel-Position & Grid-Mapping --- */
+function getNormalizedWorldEvent(entry) {
+    if (!entry) return '';
+    const raw = (entry.event != null ? entry.event : entry.cmd);
+    if (raw == null) return '';
+    return String(raw).toUpperCase();
+}
+
+/**
+ * Liefert die AKTUELLE absolute Position des Biests für diesen Log-Eintrag.
+ * - Bei MOVE: Logs speichern die Ziel-Position in abs_x/abs_y,
+ *             daher aktuelle Pos = Ziel - Move.
+ * - Bei SPLIT/anderen Events: abs_x/abs_y sind bereits die aktuelle Pos.
+ */
+function getCurrentAbsCoordsWorld(entry) {
+    if (!entry || entry.abs_x == null || entry.abs_y == null) return null;
+
+    const mv = Array.isArray(entry.move) && entry.move.length === 2
+        ? entry.move
+        : null;
+
+    const ev = getNormalizedWorldEvent(entry);
+    if (ev === 'MOVE' && mv) {
+        return {
+            x: entry.abs_x - mv[0],
+            y: entry.abs_y - mv[1]
+        };
+    }
+
+    return {
+        x: entry.abs_x,
+        y: entry.abs_y
+    };
+}
+
+/**
+ * Liefert die ZIEL-Position (falls vorhanden) für diesen Log-Eintrag.
+ * - Bei MOVE: Ziel = abs_x/abs_y.
+ * - Bei SPLIT/anderen Events: Ziel = aktuelle Pos + Move (falls Move existiert).
+ */
+function getTargetAbsCoordsWorld(entry) {
+    if (!entry || entry.abs_x == null || entry.abs_y == null) return null;
+
+    const mv = Array.isArray(entry.move) && entry.move.length === 2
+        ? entry.move
+        : null;
+
+    const ev = getNormalizedWorldEvent(entry);
+    if (ev === 'MOVE') {
+        return {
+            x: entry.abs_x,
+            y: entry.abs_y
+        };
+    }
+
+    if (mv) {
+        return {
+            x: entry.abs_x + mv[0],
+            y: entry.abs_y + mv[1]
+        };
+    }
+
+    return null;
+}
+
+/**
+ * Mappt Weltkoordinaten (x,y) auf Grid-Indices (row,col) im 71x34 Raster.
+ * Kein Wrap mehr – Felder außerhalb des sichtbaren Bereichs werden ignoriert.
+ */
+function worldToGridCoords(x, y) {
+    if (x == null || y == null) return null;
+
+    if (x < WORLD_X_MIN || x > WORLD_X_MAX) return null;
+    if (y < WORLD_Y_MIN_CELL || y > WORLD_Y_MAX_CELL) return null;
+
+    const col = x + Math.floor(WORLD_COLS / 2);
+    const row = y + Math.floor(WORLD_ROWS / 2);
+
+    if (col < 0 || col >= WORLD_COLS || row < 0 || row >= WORLD_ROWS) return null;
+
+    return { row, col };
 }
 
 /* --- Sicht, Trails, Dots, Pfeile usw. --- */
@@ -1810,7 +1768,7 @@ function renderWorldVisualization() {
     const moveArea = worldGridContainer.querySelector('#worldMoveAreaLayer');
     const moveTarget = worldGridContainer.querySelector('#worldMoveTargetLayer');
 
-    // Leeren
+    // Layer leeren
     if (trailLayer) trailLayer.innerHTML = '';
     if (seenLayer) seenLayer.innerHTML = '';
     if (envLayer) envLayer.innerHTML = '';
@@ -1819,7 +1777,7 @@ function renderWorldVisualization() {
     if (moveArea) moveArea.innerHTML = '';
     if (moveTarget) moveTarget.innerHTML = '';
 
-    // Sichtbarkeiten berechnen
+    // Sichtbarkeiten zurücksetzen
     worldVisibilityMap.clear();
 
     const selected = getSelectedBeastIds();
@@ -1827,17 +1785,16 @@ function renderWorldVisualization() {
         ? logData[currentRoundIndex].round
         : null;
 
-    // 1) Alle Zellen auf "unentdeckt" zurücksetzen
+    // alle Cells auf "unentdeckt" setzen
     const cells = worldGridContainer.querySelectorAll('.world-grid-cell');
     cells.forEach(c => {
         c.style.background = 'var(--world-undiscovered)';
     });
 
-    // Kachelgröße in %
     const tileW = (100 / WORLD_COLS);
     const tileH = (100 / WORLD_ROWS);
 
-    // 2) Trails (letzte N Positionen, schwächer werdend)
+    // 2) Trails (letzte N Positionen – aktuelle Position, nicht Ziel)
     const N = parseInt(worldTrailSlider?.value || '1');
 
     if (selected.length && trailLayer) {
@@ -1846,17 +1803,17 @@ function renderWorldVisualization() {
 
             for (let i = 0; i < history.length; i++) {
                 const h = history[history.length - 1 - i]; // i=0 => aktuell
-                if (h.abs_x == null || h.abs_y == null) continue;
 
-                const x = h.abs_x;
-                const y = clampWorldY(h.abs_y);
+                const cur = getCurrentAbsCoordsWorld(h);
+                if (!cur) continue;
 
-                if (x < WORLD_X_MIN || x > WORLD_X_MAX) continue;
+                const gridPos = worldToGridCoords(cur.x, cur.y);
+                if (!gridPos) continue;
 
                 const div = document.createElement('div');
                 div.style.position = 'absolute';
-                div.style.left = ((x + Math.floor(WORLD_COLS / 2) + 0.5) * tileW) + '%';
-                div.style.top = ((y + Math.floor(WORLD_ROWS / 2) + 0.5) * tileH) + '%';
+                div.style.left = ((gridPos.col + 0.5) * tileW) + '%';
+                div.style.top = ((gridPos.row + 0.5) * tileH) + '%';
                 div.style.width = (tileW * 0.55) + '%';
                 div.style.height = (tileH * 0.55) + '%';
                 div.style.transform = 'translate(-50%,-50%)';
@@ -1873,24 +1830,21 @@ function renderWorldVisualization() {
         });
     }
 
-    // 3) Fading der "gesehenen" Kacheln über N Schritte + aktuelle Env-Overlays
+    // 3) Fading der "gesehenen" Kacheln + Sichtbarkeitsmap
     if (selected.length) {
-
-        // WICHTIG: Schleife UMGEKEHRT -> neueste Steps zuletzt -> liegen OBEN
         for (let step = N - 1; step >= 0; step--) {
 
-            // feste Graustufe je "Alter" der Runde
             let colorVar;
             if (step === 0) {
-                colorVar = 'var(--world-seen-0)';      // letzte Runde – hell
+                colorVar = 'var(--world-seen-0)';
             } else if (step === 1) {
-                colorVar = 'var(--world-seen-1)';      // vorletzte Runde
+                colorVar = 'var(--world-seen-1)';
             } else if (step === 2) {
                 colorVar = 'var(--world-seen-2)';
             } else if (step === 3) {
                 colorVar = 'var(--world-seen-3)';
             } else {
-                colorVar = 'var(--world-seen-old)';    // alles was noch älter ist
+                colorVar = 'var(--world-seen-old)';
             }
 
             selected.forEach(bid => {
@@ -1906,46 +1860,37 @@ function renderWorldVisualization() {
                     );
                     entry = hist.length ? hist[hist.length - 1] : null;
                 }
-                if (!entry || !entry.env || entry.abs_x == null || entry.abs_y == null) return;
 
-                const absx = entry.abs_x;
-                const absy = entry.abs_y;
+                if (!entry || !entry.env) return;
+
+                const center = getCurrentAbsCoordsWorld(entry);
+                if (!center) return;
+
                 const env = entry.env;
 
                 for (let i = 0; i < env.length && i < 49; i++) {
                     const { x: dx, y: dy } = indexToLocalXY(i);
-                    const x = absx + dx;
-                    const y = clampWorldY(absy + dy);
+                    const absx = center.x + dx;
+                    const absy = center.y + dy;
 
-                    if (x < WORLD_X_MIN || x > WORLD_X_MAX) continue;
+                    const gridPos = worldToGridCoords(absx, absy);
+                    if (!gridPos) continue;
 
-                    // "gesehen" markieren (feste Graustufe als Kachel)
                     if (seenLayer) {
-                        const row = y + Math.floor(WORLD_ROWS / 2);
-                        const col = x + Math.floor(WORLD_COLS / 2);
-
                         const tile = document.createElement('div');
                         tile.style.position = 'absolute';
-                        tile.style.left = ((col + 0.5) * tileW) + '%';
-                        tile.style.top = ((row + 0.5) * tileH) + '%';
+                        tile.style.left = ((gridPos.col + 0.5) * tileW) + '%';
+                        tile.style.top = ((gridPos.row + 0.5) * tileH) + '%';
                         tile.style.width = tileW + '%';
                         tile.style.height = tileH + '%';
                         tile.style.transform = 'translate(-50%, -50%)';
-
-                        // feste Farbe, keine Opacity
                         tile.style.background = colorVar;
                         tile.style.borderRadius = '4px';
                         tile.style.pointerEvents = 'none';
-
-                        // WICHTIG:
-                        // Weil step von N-1 → 0 läuft,
-                        // wird tile für step=0 (neueste Runde)
-                        // GANZ ZUM SCHLUSS eingefügt → liegt oben.
                         seenLayer.appendChild(tile);
                     }
 
-                    // Sichtbarkeit (für Klick-Info)
-                    const key = `${x},${y}`;
+                    const key = `${absx},${absy}`;
                     if (!worldVisibilityMap.has(key))
                         worldVisibilityMap.set(key, new Set());
                     worldVisibilityMap.get(key).add(String(bid));
@@ -1953,42 +1898,36 @@ function renderWorldVisualization() {
             });
         }
 
-
-
-
-
-        // AKTUELLE RUNDE: Inhalte farbig (B,*,<,>,=) – wie zuvor
+        // AKTUELLE RUNDE: Inhalte farbig (B,*,<,>,=) – wie im Biester-Grid
         if (envLayer) {
             selected.forEach(bid => {
                 const entry = findBeastEntryAtRound(bid, activeRound);
-                if (!entry || !entry.env || entry.abs_x == null || entry.abs_y == null) return;
+                if (!entry || !entry.env) return;
 
-                const absx = entry.abs_x;
-                const absy = entry.abs_y;
+                const center = getCurrentAbsCoordsWorld(entry);
+                if (!center) return;
+
                 const env = entry.env;
 
                 __currentBidContext = bid; // BID-Farbkontext für das Zentrum
 
                 for (let i = 0; i < env.length && i < 49; i++) {
                     const { x: dx, y: dy } = indexToLocalXY(i);
-                    const x = absx + dx;
-                    const y = clampWorldY(absy + dy);
+                    const absx = center.x + dx;
+                    const absy = center.y + dy;
 
-                    if (x < WORLD_X_MIN || x > WORLD_X_MAX) continue;
+                    const gridPos = worldToGridCoords(absx, absy);
+                    if (!gridPos) continue;
 
-                    // Farbfelder für Inhalte (B,*,<,>,=) als Overlay-Rechtecke
                     const isCenter = (dx === 0 && dy === 0);
                     const ch = isCenter ? 'B' : env[i];
                     const color = localCharToColor(ch, isCenter);
                     if (!color) continue;
 
-                    const row = y + Math.floor(WORLD_ROWS / 2);
-                    const col = x + Math.floor(WORLD_COLS / 2);
-
                     const tile = document.createElement('div');
                     tile.style.position = 'absolute';
-                    tile.style.left = ((col + 0.5) * tileW) + '%';
-                    tile.style.top = ((row + 0.5) * tileH) + '%';
+                    tile.style.left = ((gridPos.col + 0.5) * tileW) + '%';
+                    tile.style.top = ((gridPos.row + 0.5) * tileH) + '%';
                     tile.style.width = tileW + '%';
                     tile.style.height = tileH + '%';
                     tile.style.transform = 'translate(-50%,-50%)';
@@ -2005,11 +1944,10 @@ function renderWorldVisualization() {
         }
     }
 
-    // 4) Dots-Layer nur für "wichtige" Felder der vergangenen Sicht (N > 1)
+    // 4) Dots-Layer für vergangene Runden (Food / Gegner)
     if (selected.length && dotsLayer) {
         for (let step = 1; step <= Math.max(0, N - 1); step++) {
             const opacity = Math.max(0.7, (N - step) / N);
-
 
             selected.forEach(bid => {
                 const hist = getBeastHistory(
@@ -2018,33 +1956,32 @@ function renderWorldVisualization() {
                     null
                 );
                 const entry = hist.length ? hist[hist.length - 1] : null;
-                if (!entry || !entry.env || entry.abs_x == null || entry.abs_y == null) return;
+                if (!entry || !entry.env) return;
 
-                const absx = entry.abs_x;
-                const absy = entry.abs_y;
+                const center = getCurrentAbsCoordsWorld(entry);
+                if (!center) return;
+
                 const env = entry.env;
 
                 for (let i = 0; i < env.length && i < 49; i++) {
                     const { x: dx, y: dy } = indexToLocalXY(i);
-                    const x = absx + dx;
-                    const y = clampWorldY(absy + dy);
+                    const absx = center.x + dx;
+                    const absy = center.y + dy;
 
-                    if (x < WORLD_X_MIN || x > WORLD_X_MAX) continue;
+                    const gridPos = worldToGridCoords(absx, absy);
+                    if (!gridPos) continue;
 
                     const ch = env[i];
                     let dotColor = null;
-                    if (ch === '*') dotColor = '#F97316';           // Food -> Orange
-                    else if (ch === '<') dotColor = '#10B981';      // kleiner Gegner -> Grün
-                    else if (ch === '>' || ch === '=') dotColor = '#EF4444'; // großer Gegner -> Rot
-                    else continue; // leere Felder: keine Dots
-
-                    const row = y + Math.floor(WORLD_ROWS / 2);
-                    const col = x + Math.floor(WORLD_COLS / 2);
+                    if (ch === '*') dotColor = '#F97316';
+                    else if (ch === '<') dotColor = '#10B981';
+                    else if (ch === '>' || ch === '=') dotColor = '#EF4444';
+                    else continue;
 
                     const dot = document.createElement('div');
                     dot.style.position = 'absolute';
-                    dot.style.left = ((col + 0.5) * tileW) + '%';
-                    dot.style.top = ((row + 0.5) * tileH) + '%';
+                    dot.style.left = ((gridPos.col + 0.5) * tileW) + '%';
+                    dot.style.top = ((gridPos.row + 0.5) * tileH) + '%';
 
                     const d = Math.min(tileW, tileH) * 0.35;
                     dot.style.width = d + '%';
@@ -2062,16 +1999,17 @@ function renderWorldVisualization() {
         }
     }
 
-    // 5) Pfeil-Layer (SVG) für aktivierte Beasts – kleiner/feiner
+    // 5) Pfeil-Layer (SVG) – basierend auf aktueller Position
     const Nloc = parseInt(worldTrailSlider?.value || '1');
     if (arrowSvg && arrowEnabledBeasts.size > 0) {
+        arrowSvg.innerHTML = '';
+
         arrowEnabledBeasts.forEach(bid => {
-            if (!getSelectedBeastIds().includes(bid)) return; // nur wenn ausgewählt
+            if (!getSelectedBeastIds().includes(bid)) return;
 
             const history = getBeastHistory(bid, activeRound, Nloc);
             if (history.length < 2) return;
 
-            // Marker definieren (kleinerer Arrowhead)
             const markerId = `arrowhead-${bid.replace(/[^a-zA-Z0-9_-]/g, '_')}`;
             const defs = document.createElementNS('http://www.w3.org/2000/svg', 'defs');
             const marker = document.createElementNS('http://www.w3.org/2000/svg', 'marker');
@@ -2092,19 +2030,22 @@ function renderWorldVisualization() {
             defs.appendChild(marker);
             arrowSvg.appendChild(defs);
 
-            // Linien zeichnen (ältere -> blasser)
             for (let i = 1; i < history.length; i++) {
                 const a = history[i - 1];
                 const b = history[i];
 
-                if (a.abs_x == null || a.abs_y == null ||
-                    b.abs_x == null || b.abs_y == null) continue;
+                const curA = getCurrentAbsCoordsWorld(a);
+                const curB = getCurrentAbsCoordsWorld(b);
+                if (!curA || !curB) continue;
 
-                const ax = a.abs_x + Math.floor(WORLD_COLS / 2) + 0.5;
-                const ay = clampWorldY(a.abs_y) + Math.floor(WORLD_ROWS / 2) + 0.5;
+                const gridA = worldToGridCoords(curA.x, curA.y);
+                const gridB = worldToGridCoords(curB.x, curB.y);
+                if (!gridA || !gridB) continue;
 
-                const bx = b.abs_x + Math.floor(WORLD_COLS / 2) + 0.5;
-                const by = clampWorldY(b.abs_y) + Math.floor(WORLD_ROWS / 2) + 0.5;
+                const ax = gridA.col + 0.5;
+                const ay = gridA.row + 0.5;
+                const bx = gridB.col + 0.5;
+                const by = gridB.row + 0.5;
 
                 const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
                 line.setAttribute('x1', ax);
@@ -2112,7 +2053,7 @@ function renderWorldVisualization() {
                 line.setAttribute('x2', bx);
                 line.setAttribute('y2', by);
 
-                const alpha = Math.max(0.25, (i / (history.length - 1))); // spätere Segmente kräftiger
+                const alpha = Math.max(0.25, (i / (history.length - 1)));
                 line.setAttribute('stroke', getBeastColor(bid));
                 line.setAttribute('stroke-opacity', alpha.toFixed(2));
                 line.setAttribute('stroke-width', '0.35');
@@ -2129,40 +2070,41 @@ function renderWorldVisualization() {
             const entry = findBeastEntryAtRound(bid, activeRound);
             if (!entry) return;
 
-            // 5x5 Bereich um (abs_x, abs_y)
-            if (entry.abs_x != null && entry.abs_y != null && moveArea) {
-                const leftCol = (entry.abs_x - 2) + Math.floor(WORLD_COLS / 2);
-                const topRow = clampWorldY(entry.abs_y - 2) + Math.floor(WORLD_ROWS / 2);
+            const center = getCurrentAbsCoordsWorld(entry);
 
-                const areaDiv = document.createElement('div');
-                areaDiv.style.position = 'absolute';
-                areaDiv.style.left = (leftCol * tileW) + '%';
-                areaDiv.style.top = (topRow * tileH) + '%';
-                areaDiv.style.width = (5 * tileW) + '%';
-                areaDiv.style.height = (5 * tileH) + '%';
-                areaDiv.style.border = '3px solid #7C3AED';
-                areaDiv.style.borderRadius = '6px';
-                areaDiv.style.boxShadow = '0 0 12px rgba(124,58,237,0.15)';
-                areaDiv.style.pointerEvents = 'none';
+            // 5x5 Bereich um aktuelle Position (wie Biester-5x5)
+            if (center && moveArea) {
+                const baseX = center.x - 2;
+                const baseY = center.y - 2;
+                const baseGrid = worldToGridCoords(baseX, baseY);
 
-                moveArea.appendChild(areaDiv);
+                if (baseGrid) {
+                    const areaDiv = document.createElement('div');
+                    areaDiv.style.position = 'absolute';
+                    areaDiv.style.left = (baseGrid.col * tileW) + '%';
+                    areaDiv.style.top = (baseGrid.row * tileH) + '%';
+                    areaDiv.style.width = (5 * tileW) + '%';
+                    areaDiv.style.height = (5 * tileH) + '%';
+                    areaDiv.style.border = '3px solid #7C3AED';
+                    areaDiv.style.borderRadius = '6px';
+                    areaDiv.style.boxShadow = '0 0 12px rgba(124,58,237,0.15)';
+                    areaDiv.style.pointerEvents = 'none';
+
+                    moveArea.appendChild(areaDiv);
+                }
             }
 
             // Move-Target (pink) um Zielzelle
-            const mv = (entry.move && entry.move.length === 2) ? entry.move : null;
+            const target = getTargetAbsCoordsWorld(entry);
 
-            if (mv && moveTarget && entry.abs_x != null && entry.abs_y != null) {
-                const tx = entry.abs_x + mv[0];
-                const ty = clampWorldY(entry.abs_y + mv[1]);
+            if (target && moveTarget) {
+                const gridTarget = worldToGridCoords(target.x, target.y);
 
-                const col = tx + Math.floor(WORLD_COLS / 2);
-                const row = ty + Math.floor(WORLD_ROWS / 2);
-
-                if (col >= 0 && col < WORLD_COLS && row >= 0 && row < WORLD_ROWS) {
+                if (gridTarget) {
                     const tDiv = document.createElement('div');
                     tDiv.style.position = 'absolute';
-                    tDiv.style.left = (col * tileW) + '%';
-                    tDiv.style.top = (row * tileH) + '%';
+                    tDiv.style.left = (gridTarget.col * tileW) + '%';
+                    tDiv.style.top = (gridTarget.row * tileH) + '%';
                     tDiv.style.width = tileW + '%';
                     tDiv.style.height = tileH + '%';
                     tDiv.style.border = '3px solid #EC4899';
@@ -2201,8 +2143,6 @@ function fitWorldGridToWrapper() {
 }
 
 /* --- DOM-Initialisierung NACH Passwort-Check (unverändert, plus World-Hooks) --- */
-let playbackInterval = null;
-let isPlaying = false;
 
 /* Drag & Drop für Upload-Buttons */
 function setupDropZone(element, onFiles) {
@@ -2232,7 +2172,6 @@ function setupDropZone(element, onFiles) {
         onFiles(dt.files);
     });
 }
-
 
 function initAppDom() {
     // Standard-DOM
@@ -2358,8 +2297,6 @@ function initAppDom() {
     setupDropZone(gameLogButton, handleGameLogFiles);
     setupDropZone(serverLogButton, handleServerLogFiles);
 
-
-
     /* Rundennavigation & Playback */
     prevRoundButton.addEventListener('click', () => {
         togglePlayback(false);
@@ -2481,7 +2418,6 @@ function initAppDom() {
                 break;
         }
     });
-
 
     /* World: Select-All Checkbox */
     if (worldSelectAll) {
