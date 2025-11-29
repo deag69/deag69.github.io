@@ -1778,23 +1778,23 @@ function localCharToColor(ch, isCenter = false) {
     if (ch === '>' || ch === '=') return '#EF4444';
     return null;
 }
-// function clampWorldX(x) {
-//     const range = (WORLD_X_MAX - WORLD_X_MIN + 1); // 71
-//     let v = x;
-//     // auf Bereich [-35..35] abbilden (toroidisch)
-//     v = ((v - WORLD_X_MIN) % range + range) % range + WORLD_X_MIN;
-//     return v;
-// }
+function clampWorldX(x) {
+    const range = (WORLD_X_MAX - WORLD_X_MIN + 1); // 71
+    let v = x;
+    // auf Bereich [-35..35] abbilden (toroidisch)
+    v = ((v - WORLD_X_MIN) % range + range) % range + WORLD_X_MIN;
+    return v;
+}
 
 
-// /* NEU: Vertikales Wrap statt Clamping */
-// function clampWorldY(y) {
-//     const range = (WORLD_Y_MAX_CELL - WORLD_Y_MIN_CELL + 1); // 34
-//     let v = y;
-//     // auf Bereich [-17..16] abbilden (toroidisch)
-//     v = ((v - WORLD_Y_MIN_CELL) % range + range) % range + WORLD_Y_MIN_CELL;
-//     return v;
-// }
+/* NEU: Vertikales Wrap statt Clamping */
+function clampWorldY(y) {
+    const range = (WORLD_Y_MAX_CELL - WORLD_Y_MIN_CELL + 1); // 34
+    let v = y;
+    // auf Bereich [-17..16] abbilden (toroidisch)
+    v = ((v - WORLD_Y_MIN_CELL) % range + range) % range + WORLD_Y_MIN_CELL;
+    return v;
+}
 
 /* --- Sicht, Trails, Dots, Pfeile usw. --- */
 function renderWorldVisualization() {
