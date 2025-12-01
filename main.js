@@ -8,6 +8,9 @@ let logData = [];                 // aktives Spiel-Log
 let currentRoundIndex = 0;
 let globalMaxRound = 0;
 
+let lastGlobalAbsRound = 0;
+
+
 const GRID_SIZE = 7;
 const GRID_CENTER = Math.floor(GRID_SIZE / 2);
 
@@ -381,11 +384,16 @@ function renderInfo(data) {
     const prioHunt = parseInt(data.priorityhunt) || 0;
     const prioKill = parseInt(data.prioritykill) || 0;
     const prioEscape = parseInt(data.priorityescape) || 0;
+    const prioEnergy = parseFloat(data.priorityenergy) || 0;
 
     document.getElementById('prioFood').textContent = prioFood;
     document.getElementById('prioHunt').textContent = prioHunt;
     document.getElementById('prioKill').textContent = prioKill;
     document.getElementById('prioEscape').textContent = prioEscape;
+    const prioEnergyEl = document.getElementById('prioEnergy');
+    if (prioEnergyEl) {
+        prioEnergyEl.textContent = prioEnergy;
+    }
 
     const nextMove = (data.move && data.move.length === 2) ? data.move : null;
 
@@ -657,6 +665,12 @@ function goToRound(index) {
         const currentData = logData[currentRoundIndex];
         if (!currentData) return;
 
+        // NEU: globale letzte abs_Runde merken (0 wird ignoriert)
+        const absR = Number(currentData.round);
+        if (Number.isFinite(absR) && absR > 0) {
+            lastGlobalAbsRound = absR;
+        }
+
         const maxRound = getMaxRoundForDisplay();
 
         roundIndicator.textContent = `Runde ${currentData.round} / ${maxRound}`;
@@ -679,6 +693,7 @@ function goToRound(index) {
         renderServerLogsForRoundWorld(currentData.round);
     }
 }
+
 
 function resetUIForNoData() {
     logData = [];
@@ -792,6 +807,9 @@ function normalizeLogObject(obj) {
         }
         if (typeof normalized.priorityescape === 'undefined' && typeof obj.pe !== 'undefined') {
             normalized.priorityescape = obj.pe;
+        }
+        if (typeof normalized.priorityenergy === 'undefined' && typeof obj.pen !== 'undefined') {
+            normalized.priorityenergy = obj.pen;
         }
     }
 
@@ -945,7 +963,8 @@ function renderEmptyGrid() {
         priorityfood: 0,
         priorityhunt: 0,
         prioritykill: 0,
-        priorityescape: 0
+        priorityescape: 0,
+        priorityenergy: 0
     };
 
     createGridCells(dummy, gridContainer, false);
@@ -983,6 +1002,64 @@ function getMaxRoundForDisplay() {
     }
     return 0;
 }
+// Sucht die Position einer absoluten Runde (abs_r) im Log-Array
+function findRoundIndexByAbsRound(absRound, dataArr) {
+    if (!dataArr || !Array.isArray(dataArr)) return -1;
+
+    const target = Number(absRound);
+    if (!Number.isFinite(target)) return -1;
+
+    for (let i = 0; i < dataArr.length; i++) {
+        const row = dataArr[i];
+        if (!row || row.round == null) continue;
+
+        const r = Number(row.round);
+        if (!Number.isFinite(r)) continue;
+
+        if (r === target) {
+            return i;
+        }
+    }
+
+    return -1;
+}
+
+
+// Fallback-Helfer, falls noch nichts geladen ist
+function getMaxRoundForDisplay() {
+    if (globalMaxRound && globalMaxRound > 0) {
+        return globalMaxRound;
+    }
+    if (logData && logData.length > 0) {
+        const last = logData[logData.length - 1];
+        const r = parseInt(last.round);
+        return Number.isNaN(r) ? 0 : r;
+    }
+    return 0;
+}
+
+// NEU: Index einer absoluten Runde (abs_r) im Log-Array finden
+function findRoundIndexByAbsRound(absRound, dataArr) {
+    if (!dataArr || !Array.isArray(dataArr)) return -1;
+
+    const target = Number(absRound);
+    if (!Number.isFinite(target)) return -1;
+
+    for (let i = 0; i < dataArr.length; i++) {
+        const row = dataArr[i];
+        if (!row || row.round == null) continue;
+
+        const r = Number(row.round);
+        if (!Number.isFinite(r)) continue;
+
+        if (r === target) {
+            return i;
+        }
+    }
+
+    return -1;
+}
+
 
 /* Spiel-Logs (Biest-Logs) aus einer FileList laden */
 async function handleGameLogFiles(files) {
@@ -993,6 +1070,7 @@ async function handleGameLogFiles(files) {
 
     togglePlayback(false);
     allLogData = {};
+    lastGlobalAbsRound = 0; // NEU: globalen Marker zurücksetzen
     if (fileCount) fileCount.textContent = `Lade ${files.length} Datei(en)...`;
 
     const fileReadPromises = [];
@@ -1021,7 +1099,8 @@ async function handleGameLogFiles(files) {
                                 priorityfood: 0,
                                 priorityhunt: 0,
                                 prioritykill: 0,
-                                priorityescape: 0
+                                priorityescape: 0,
+                                priorityenergy: 0
                             });
                         }
                     }
@@ -1152,14 +1231,23 @@ function selectActiveFile(fileName) {
         playPauseButton.disabled = false;
         zoomButton.disabled = false;
 
-        const maxRound = getMaxRoundForDisplay();
-        roundIndicator.textContent = `Runde 0 / ${maxRound}`;
+        // NEU: versuchen, zur letzten global gemerkten abs_Runde zu springen
+        let startIndex = 0;
 
-        goToRound(0);
+        if (lastGlobalAbsRound > 0) {
+            const idx = findRoundIndexByAbsRound(lastGlobalAbsRound, logData);
+            if (idx >= 0) {
+                startIndex = idx;
+            }
+        }
+
+        // goToRound kümmert sich um Round-Label, Slider, Logs, etc.
+        goToRound(startIndex);
     } else {
         resetUIForNoData();
     }
 }
+
 
 /* --- World Dashboard – Beast IDs & Grid & Logs (ERWEITERT NUR HIER) --- */
 function updateBeastIdListWorld() {
